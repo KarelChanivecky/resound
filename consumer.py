@@ -7,9 +7,9 @@ class Consumer:
     Models a threaded consumer.
     """
     def __init__(self, buffer_size):
-        self.buffer = queue.Queue()
-        self.producer_semaphore = threading.Semaphore()
-        self.consumer_semaphore = threading.Semaphore(buffer_size)
+        self.__buffer = queue.Queue()
+        self.__producer_semaphore = threading.Semaphore()
+        self.__consumer_semaphore = threading.Semaphore(buffer_size)
 
     def start_consuming(self):
         """
