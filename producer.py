@@ -3,8 +3,8 @@ class Producer:
     """
     Models a threaded producer.
     """
-    def __init__(self):
-        self.consumer = None
+    def __init__(self, consumer):
+        self.consumer = consumer
 
     def set_consumer(self, consumer):
         """
