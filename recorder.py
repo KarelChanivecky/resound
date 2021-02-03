@@ -1,9 +1,9 @@
-import producer
 import threading as th
 import sounddevice as soundd
+from producer import Producer
 
 
-class Recorder(producer.Producer):
+class Recorder(Producer):
     """
     Models an audio recorder. A threaded producer.
 
@@ -20,11 +20,12 @@ class Recorder(producer.Producer):
         :param consumer: a Consumer
         :param target_frequency_max: in Hz
         """
-        super().__init__(consumer)
+        Producer.__init__(self, consumer)
         self.sample_rate = target_frequency_max * 2
         self.sample_duration = sample_duration
         self.thread = th.Thread(target=self.record)
         self.running = False
+        super().__produce("dsgsd")
 
     def set_consumer(self, consumer):
         super().set_consumer(consumer)
@@ -43,7 +44,7 @@ class Recorder(producer.Producer):
         """
         while self.running:
             self.consumer.verify()
-            self.consumer.give(self.get_sample())
+            super().__produce(self.get_sample())
 
     def get_sample(self):
         return soundd.rec((self.sample_rate * self.sample_duration),
