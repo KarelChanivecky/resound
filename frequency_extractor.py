@@ -38,6 +38,8 @@ HIGHPASS_FILTER_BOUND = 16
 FREQ_INDEX = 0
 AMP_INDEX = 1
 TARGET_Z_SCORE = 3
+
+
 # FFT_SIZE = 256
 
 
@@ -165,7 +167,7 @@ def get_spectrum(sound_sample: SoundSample, fft_size):
     sample_rate = sound_sample.get_sample_rate()
     samples = sound_sample.get_samples()
     sample_count = len(samples)
-    complex_amplitudes = np.fft.rfft(samples[:, 0], n = fft_size)[0:int(sample_count/2)] / sample_count
+    complex_amplitudes = np.fft.rfft(samples[:, 0], n=fft_size)[0:int(sample_count / 2)] / sample_count
     complex_amplitudes[1:] = 2 * complex_amplitudes[1:]
     amplitudes_real = np.abs(complex_amplitudes)
     freqs = sample_rate * np.arange(sample_count / 2) / sample_count
@@ -200,8 +202,8 @@ def interpolate_group(samples, frequency_resolution=1):
     if max_index == 0 or max_index == len(samples) - 1:
         return samples[max_index][FREQ_INDEX]
     return gaussian_interpolation(
-            [samples[max_index - 1], samples[max_index], samples[max_index + 1]],
-            frequency_resolution)
+        [samples[max_index - 1], samples[max_index], samples[max_index + 1]],
+        frequency_resolution)
 
 
 def get_fundamental_frequency(sound_sample: SoundSample):
@@ -222,7 +224,6 @@ def get_fundamental_frequency(sound_sample: SoundSample):
     return interpolate_group(peak_groups[0], 1)
 
 
-
 class FrequencyExtractor(Producer, Consumer):
     """
     A consumer that extracts the base frequency in a SoundSample
@@ -240,4 +241,40 @@ class FrequencyExtractor(Producer, Consumer):
         """
         Producer.__init__(self, consumer)
         Consumer.__init__(self, 1024)
-        self.thread = th.Thread()
+        self.thread = th.Thread(target=self.factory)
+        self.producing = False
+        self.consuming = False
+
+    def factory(self):
+        """
+        Consume from buffer.
+        """
+
+        # Consume the whole buffer when stopping
+        while self.consuming or not (super().__buffer.empty() and not self.producing):
+            super().__producer_semaphore.acquire()
+            sound_sample = super().__buffer.get()
+
+            super().__produce(get_fundamental_frequency(sound_sample))
+            super().__consumer_semaphore.release()
+
+    def start_producing(self):
+        self.producing = True
+        self.thread.start()
+
+    def stop_producing(self):
+        self.producing = False
+
+    def start_consuming(self):
+        self.consuming = True
+        self.start_producing()
+
+    def stop_consuming(self):
+        self.consuming = False
+
+    def give(self, obj):
+        super().__buffer.put(obj)
+        super().__producer_semaphore.release()
+
+    def verify(self):
+        super().verify()
