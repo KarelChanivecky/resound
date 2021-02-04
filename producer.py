@@ -1,3 +1,5 @@
+from consumer import Consumer
+
 
 class Producer:
     """
@@ -11,15 +13,16 @@ class Producer:
         b) Invoke your own logic
         c) pass produced object to produce
     """
-    def __init__(self, consumer):
-        self.consumer = consumer
+    def __init__(self, consumer: Consumer):
+        self._consumer = consumer
+        self._producing = False
 
     def set_consumer(self, consumer):
         """
         Set the consumer for this producer
         :param consumer: a Consumer
         """
-        self.consumer = consumer
+        self._consumer = consumer
 
     def start_producing(self):
         """
@@ -33,22 +36,9 @@ class Producer:
         """
         pass
 
-    def __produce(self, obj):
+    def _produce(self, obj):
         """
         Pass an object to consumer.
         :param obj: any
         """
-        self.consumer.give(obj)
-
-    def __give_to_consumer(self, obj):
-        """
-        Give object to consumer
-        :param obj: any
-        """
-        pass
-
-    def __await_consumer(self):
-        """
-        Await for consumer to avoid buffer overflow.
-        """
-        pass
+        self._consumer.give(obj)
