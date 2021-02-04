@@ -7,9 +7,10 @@ class Consumer:
     Models a consumer.
 
     The purpose of this class is to implement a consumer that controls
-    a buffer from overflowing or underflowing.
+    a buffer from overflowing or under-flowing.
 
-    You could just override _consume, but you probably want to override _consume and start_consuming.
+    You could just override _consume, but you probably want to override _consume,
+    start_consuming, and stop_consuming.
     """
 
     def __init__(self, buffer_size):
