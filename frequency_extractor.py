@@ -38,7 +38,7 @@ HIGHPASS_FILTER_BOUND = 16
 FREQ_INDEX = 0
 AMP_INDEX = 1
 TARGET_Z_SCORE = 3
-
+DISSIMILAR_FREQUENCY_THRESHOLD = 1.1
 
 # FFT_SIZE = 256
 
@@ -50,8 +50,10 @@ def contains_dissimilar_frequency(samples):
     :param samples: A list of tuples: (freq, amp)
     :return: True if a dissimilar frequency is found, else false
     """
+    if len(samples) < 2:
+        return False
     print(f'@outliers: {samples}')
-    threshold = samples[0] * 1.1
+    threshold = samples[0] * DISSIMILAR_FREQUENCY_THRESHOLD
     print(f'threshold: {threshold}')
     print(f'{samples}')
     for sample in samples:
