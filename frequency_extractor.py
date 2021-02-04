@@ -241,40 +241,36 @@ class FrequencyExtractor(Producer, Consumer):
         """
         Producer.__init__(self, consumer)
         Consumer.__init__(self, 1024)
-        self.thread = th.Thread(target=self.factory)
+        self.thread = th.Thread(target=self._consume)
         self.producing = False
         self.consuming = False
 
-    def factory(self):
+    def _consume(self):
         """
         Consume from buffer.
         """
-
         # Consume the whole buffer when stopping
-        while self.consuming or not (super().__buffer.empty() and not self.producing):
-            super().__producer_semaphore.acquire()
-            sound_sample = super().__buffer.get()
-
-            super().__produce(get_fundamental_frequency(sound_sample))
-            super().__consumer_semaphore.release()
+        while self.consuming or not (self._buffer.empty() and self.producing):
+            self._producer_semaphore.acquire()
+            sound_sample = self._buffer.get()
+            self._produce(get_fundamental_frequency(sound_sample))
+            self._consumer_semaphore.release()
+        self.stop_producing()
 
     def start_producing(self):
         self.producing = True
         self.thread.start()
+        self._consumer.start_consuming()
 
     def stop_producing(self):
         self.producing = False
+        self._consumer.stop_consuming()
 
     def start_consuming(self):
         self.consuming = True
         self.start_producing()
+        self.thread.start()
 
     def stop_consuming(self):
         self.consuming = False
 
-    def give(self, obj):
-        super().__buffer.put(obj)
-        super().__producer_semaphore.release()
-
-    def verify(self):
-        super().verify()
