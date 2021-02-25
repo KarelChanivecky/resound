@@ -1,6 +1,7 @@
 import threading as th
 import sounddevice as soundd
 from producer import Producer
+from SoundSample import SoundSample
 
 
 class Recorder(Producer):
@@ -20,21 +21,21 @@ class Recorder(Producer):
         :param consumer: a Consumer
         :param target_frequency_max: in Hz
         """
-        Producer.__init__(self, consumer)
-        self.sample_rate = target_frequency_max * 2
-        self.sample_duration = sample_duration
-        self.thread = th.Thread(target=self.record)
-        self.running = False
-        super().__produce("dsgsd")
+        super().__init__(consumer)
+        self.__sample_rate = target_frequency_max * 2
+        self.__sample_duration = sample_duration
+        self.__thread = th.Thread(target=self.record, daemon=True)
 
     def set_consumer(self, consumer):
         super().set_consumer(consumer)
 
     def start_producing(self):
-        self.consumer.start_consuming()
+        self._producing = True
+        self.__thread.start()
+        self._consumer.start_consuming()
 
     def stop_producing(self):
-        self.running = False
+        self._producing = False
 
     def record(self):
         """
@@ -42,11 +43,11 @@ class Recorder(Producer):
 
         To be run threaded.
         """
-        while self.running:
-            self.consumer.verify()
-            super().__produce(self.get_sample())
+        while self._producing:
+            self._consumer.give(self.get_sample())
 
     def get_sample(self):
-        return soundd.rec((self.sample_rate * self.sample_duration),
-                          self.sample_rate, Recorder.__CHANNELS,
-                          Recorder.__SAMPLE_TYPE)
+        return SoundSample(self.__sample_rate, self.__sample_duration,
+                           soundd.rec(int(self.__sample_rate * self.__sample_duration),
+                                      self.__sample_rate, Recorder.__CHANNELS,
+                                      Recorder.__SAMPLE_TYPE, blocking=True)[:, 0])
