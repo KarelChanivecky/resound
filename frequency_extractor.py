@@ -58,6 +58,8 @@ def select_peaks(amplitudes):
     for fft_bin in range(0, len(amplitudes)):
         if amplitude_threshold < amplitudes[fft_bin]:
             peaks.append(fft_bin)
+    if len(peaks) == 0:
+        return [-1]
     return peaks
 
 
@@ -167,7 +169,7 @@ class FrequencyExtractor(Producer, Consumer):
         """
         Producer.__init__(self, consumer)
         Consumer.__init__(self, 1024)
-        self.thread = th.Thread(target=self._consume)
+        self.__thread = th.Thread(target=self._consume)
         self.producing = False
         self.consuming = False
 
@@ -185,7 +187,6 @@ class FrequencyExtractor(Producer, Consumer):
 
     def start_producing(self):
         self.producing = True
-        self.thread.start()
         self._consumer.start_consuming()
 
     def stop_producing(self):
@@ -195,7 +196,7 @@ class FrequencyExtractor(Producer, Consumer):
     def start_consuming(self):
         self.consuming = True
         self.start_producing()
-        self.thread.start()
+        self.__thread.start()
 
     def stop_consuming(self):
         self.consuming = False
