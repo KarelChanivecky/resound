@@ -159,7 +159,7 @@ class FrequencyExtractor(Producer, Consumer):
 
     CONSUMER_BUFFER_SIZE = 1024
 
-    def __init__(self, consumer):
+    def __init__(self, consumer, buffer_size=CONSUMER_BUFFER_SIZE):
         """
         Construct instance of Frequency FrequencyExtractor.
 
@@ -168,7 +168,7 @@ class FrequencyExtractor(Producer, Consumer):
         :param consumer: The consumer of the data produced by this class
         """
         Producer.__init__(self, consumer)
-        Consumer.__init__(self, 1024)
+        Consumer.__init__(self, buffer_size)
         self.__thread = th.Thread(target=self._consume)
         self.producing = False
         self.consuming = False

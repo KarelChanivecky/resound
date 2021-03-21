@@ -20,21 +20,24 @@ By: Karel Chanivecky Garcia
 - Frequency identification is implemented
 - Integration test between recording and frequency identification modules
 - Frequency identification module is unit tested
+- Musical note identification based on frequency identified
+- Musical note identification unit tested
+- Musical note identification integration tested
 
 ## SOON TO COME:
-- Musical note identification based on frequency identified
-- Musical note identification unit testing
-- Musical note identification integration testing
 - Tuner UI
 - Optimization of frequency identification accuracy
-
+- Refactor consumer/producer classes to reduce code duplication and boilerplating
 
 ## KNOWN LIMITATIONS:
 - It is not accurate enough to use professionally; empirical optimization of parameters ensues to achieve desired results
 
 ## BIBLIOGRAPHY:
 
-- Improving FFT resolution, J. Marsar. 2015<br>
+- Improving FFT resolution. J. Marsar. 2015<br>
   http://www.add.ece.ufl.edu/4511/references/ImprovingFFTResoltuion.pdf
-- Improving FFT frequency measurement resolution by parabolic and gaussian interpolation, M. Gasior, J.L. Gonzalez. 2004.<br>
+- Improving FFT frequency measurement resolution by parabolic and gaussian interpolation. M. Gasior, J.L. Gonzalez. 2004.<br>
   https://mgasior.web.cern.ch/pap/FFT_resol_note.pdf
+- Physics of Music - Notes. MTU. Accessed Mar 20, 2021.<br>
+  https://pages.mtu.edu/~suits/notefreqs.html
+  https://pages.mtu.edu/~suits/NoteFreqCalcs.html
