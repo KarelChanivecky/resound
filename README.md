@@ -3,6 +3,7 @@
 By: Karel Chanivecky Garcia
 
 ## VERSION:
+- 0.6: Musical notes are now identified in reference to note
 - 0.5: Recorder, Frequency identification, basic program entry point implemented
 
 ## LEARNING GOALS:
