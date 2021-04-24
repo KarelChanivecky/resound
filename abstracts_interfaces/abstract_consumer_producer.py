@@ -5,11 +5,13 @@ from process_interface import ProcessInterface
 
 class AbstractConsumerProducer(AbstractConsumer, AbstractProducer):
     """
-
+    Models an consumer/producer that can be chained with other AbstractConsumerProducer or AbstractConsumer or
+    AbstractProducer
     """
 
-    def __init__(self, buffer_size, process: ProcessInterface) -> None:
+    def __init__(self, buffer_size, consumer: AbstractConsumer, process: ProcessInterface) -> None:
         super().__init__(buffer_size, process)
+        self._consumer = consumer
 
     def give(self, obj):
         super().give(obj)
