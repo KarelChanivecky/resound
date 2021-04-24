@@ -1,9 +1,7 @@
 import math
 
-from abstracts_interfaces.abstract_consumer import AbstractConsumer
+from abstracts_interfaces.process import Process
 from musical_note import MusicalNote
-from abstracts_interfaces.abstract_producer import AbstractProducer
-import threading as th
 
 SEMITONE_FREQ_RATIO = math.pow(2, 1 / 12)
 SEMITONES_IN_SCALE = 12
@@ -57,7 +55,7 @@ def get_note(freq, A4_frequency):
     return MusicalNote(semitones_diff, octave, delta)
 
 
-class NoteIdentifier(AbstractProducer, AbstractConsumer):
+class NoteIdentifierProcess(Process):
     """
     A consumer that identifies a musical note given a frequency.
 
@@ -69,9 +67,7 @@ class NoteIdentifier(AbstractProducer, AbstractConsumer):
 
     """
 
-    CONSUMER_BUFFER_SIZE = 1024
-
-    def __init__(self, consumer, A4_frequency=DEFAULT_A4_FREQ, buffer_size=CONSUMER_BUFFER_SIZE):
+    def __init__(self, A4_frequency=DEFAULT_A4_FREQ):
         """
         Construct instance of Frequency FrequencyExtractor.
 
@@ -79,40 +75,14 @@ class NoteIdentifier(AbstractProducer, AbstractConsumer):
 
         :param consumer: The consumer of the data produced by this class
         """
-        AbstractProducer.__init__(self, consumer)
-        AbstractConsumer.__init__(self, buffer_size)
-        self.__thread = th.Thread(target=self._consume)
-        self.producing = False
-        self.consuming = False
         self.A4_frequency = A4_frequency
 
-    def _consume(self):
+    def run(self, freq=None):
         """
         Consume from buffer.
         """
-        # Consume the whole buffer when stopping
-        while self.consuming or not (self._buffer.empty() and self.producing):
-            self._producer_semaphore.acquire()
-            freq = self._buffer.get()
-            self._produce(get_note(freq, self.A4_frequency))
-            self._consumer_semaphore.release()
-        self.stop()
+        return get_note(freq, self.A4_frequency)
 
     def set_A4_frequency(self, new_A4_frequency):
         self.A4_frequency = new_A4_frequency
 
-    def start(self):
-        self.producing = True
-        self._consumer.start()
-
-    def stop(self):
-        self.producing = False
-        self._consumer.stop()
-
-    def start(self):
-        self.consuming = True
-        self.start()
-        self.__thread.start()
-
-    def stop(self):
-        self.consuming = False
