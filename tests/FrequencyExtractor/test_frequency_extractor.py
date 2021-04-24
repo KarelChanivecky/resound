@@ -1,7 +1,6 @@
 from unittest import TestCase
 import numpy as np
-import frequency_extractor
-import SoundSample
+from processes import frequency_extraction_process
 
 
 class Test(TestCase):
@@ -17,6 +16,6 @@ class Test(TestCase):
         noise_amplitude = 1
         noise = np.random.normal(size=sample_rate * length, scale=1, loc=noise_amplitude)
         A_wave *= noise
-        sound_sample = SoundSample.SoundSample(sample_rate, length, A_wave)
-        identified_freq = frequency_extractor.get_fundamental_frequency(sound_sample)
+        sound_sample = sound_sample.SoundSample(sample_rate, length, A_wave)
+        identified_freq = frequency_extraction_process.__get_fundamental_frequency(sound_sample)
         self.assertAlmostEqual(identified_freq, A_frequency, delta=2)

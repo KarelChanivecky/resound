@@ -1,6 +1,6 @@
 from unittest import TestCase
 import numpy.random as np_rd
-import frequency_extractor
+from processes import frequency_extraction_process
 
 
 class TestGetAmplitudeThreshold(TestCase):
@@ -9,5 +9,5 @@ class TestGetAmplitudeThreshold(TestCase):
         sd = 1
         normal_samples = np_rd.normal(loc=mean, scale=sd, size=100)
         normal_samples += [100]
-        threshold = frequency_extractor.get_amplitude_threshold(normal_samples)
-        self.assertGreater(threshold, frequency_extractor.TARGET_Z_SCORE * sd + mean)
+        threshold = frequency_extraction_process.__get_amplitude_threshold(normal_samples)
+        self.assertGreater(threshold, frequency_extraction_process.DEFAULT_TARGET_Z_SCORE * sd + mean)

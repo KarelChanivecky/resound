@@ -1,10 +1,10 @@
 import threading as th
 import sounddevice as soundd
-from abstracts_interfaces.process_interface import ProcessInterface
+from abstracts_interfaces.process import Process
 from sound_sample import SoundSample
 
 
-class RecorderProcess(ProcessInterface):
+class RecorderProcess(Process):
     """
     Models an audio recorder. A threaded producer.
 
@@ -23,12 +23,12 @@ class RecorderProcess(ProcessInterface):
         self.__sample_rate = target_frequency_max * 2
         self.__sample_duration = sample_duration
 
-    def run(self, **kwargs):
+    def run(self, _=None):
         """
         Record sound and pass to consumer.
 
         To be run threaded.
-        :param **kwargs:
+        :param _: unused
         """
         return self.get_sample()
 

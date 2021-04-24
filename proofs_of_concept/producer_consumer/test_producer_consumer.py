@@ -15,7 +15,7 @@ class TestProducerConsumer(TestCase):
     def test_fast_producer_slow_consumer(self, mock_stdout):
         consumer = ConcreteConsumer(CONSUMER_BUFFER, 1)
         producer = ConcreteProducer(consumer, 0.1)
-        producer.start_producing()
+        producer.start()
         expected_ten_lines = """Producer did it 1 times
 Producer did it 2 times
 Producer did it 3 times
@@ -28,7 +28,7 @@ Producer did it 6 times
 Consumer did it 4 times
 """
         sleep(6)
-        producer.stop_producing()
+        producer.stop()
         produced_out = mock_stdout.getvalue()[0:len(expected_ten_lines)]
         self.assertEqual(expected_ten_lines, produced_out)
 
@@ -36,7 +36,7 @@ Consumer did it 4 times
     def test_slow_producer_fast_consumer(self, mock_stdout):
         consumer = ConcreteConsumer(CONSUMER_BUFFER, 0.1)
         producer = ConcreteProducer(consumer, 1)
-        producer.start_producing()
+        producer.start()
         expected_ten_lines = """Producer did it 1 times
 Consumer did it 1 times
 Producer did it 2 times
@@ -49,7 +49,7 @@ Producer did it 5 times
 Consumer did it 5 times
 """
         sleep(6)
-        producer.stop_producing()
+        producer.stop()
         produced_out = mock_stdout.getvalue()[0:len(expected_ten_lines)]
         sys.stderr.write(f"expected:\n {expected_ten_lines}\n")
         sys.stderr.write(f"produced:\n {produced_out}\n")

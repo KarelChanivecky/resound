@@ -1,6 +1,6 @@
 from unittest import TestCase
 import numpy.random as np_rd
-import frequency_extractor
+from processes import frequency_extraction_process
 
 
 class Test(TestCase):
@@ -12,7 +12,7 @@ class Test(TestCase):
         normal_samples.insert(10, 200)
         normal_samples.insert(50, 300)
         normal_samples.insert(99, 15)
-        peaks = frequency_extractor.select_peaks(normal_samples)
+        peaks = frequency_extraction_process.__select_peaks(normal_samples)
         self.assertEqual(len(peaks), 2)
         self.assertEqual(peaks[0], 10)
         self.assertEqual(peaks[1], 50)

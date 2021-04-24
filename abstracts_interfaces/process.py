@@ -1,15 +1,15 @@
-class ProcessInterface:
+class Process:
     """
     Exposes run method
     """
 
-    def run(self, obj: any = None) -> any:
+    def run(self, item=None) -> any:
         """
         Run the process on the given obj.
 
         May cause side-effects.
 
-        :param obj: Any obj, including None
+        :type item: any
         :return: Any obj, including None
         """
         pass

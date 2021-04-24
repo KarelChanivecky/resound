@@ -25,7 +25,7 @@ class TestProducerConsumer(TestCase):
         consumer = ConcreteConsumer(CONSUMER_BUFFER, 0.1)
         producer_consumer = ConcreteProducerConsumer(consumer, CONSUMER_BUFFER, 1)
         producer = ConcreteProducer(producer_consumer, 0.1)
-        producer.start_producing()
+        producer.start()
         expected_ten_lines = """Producer did it 1 times
 Producer did it 2 times
 Producer did it 3 times
@@ -46,7 +46,7 @@ Consumer did it 5 times
 Producer did it 8 times
 """
         sleep(6)
-        producer.stop_producing()
+        producer.stop()
         produced_out = mock_stdout.getvalue()
         produced_out_cropped = produced_out[0:len(expected_ten_lines)]
         sys.stderr.write(f"produced:\n {produced_out}\n")
@@ -57,7 +57,7 @@ Producer did it 8 times
         consumer = ConcreteConsumer(CONSUMER_BUFFER, 0.1)
         producer_consumer = ConcreteProducerConsumer(consumer, CONSUMER_BUFFER, 0.1)
         producer = ConcreteProducer(producer_consumer, 1)
-        producer.start_producing()
+        producer.start()
         expected_ten_lines = """Producer did it 1 times
 consumer/producer did it 1
 Consumer did it 1 times
@@ -77,7 +77,7 @@ Producer did it 6 times
 consumer/producer did it 6
 Consumer did it 6 times"""
         sleep(6)
-        producer.stop_producing()
+        producer.stop()
         produced_out = mock_stdout.getvalue()
         produced_out_cropped = produced_out[0:len(expected_ten_lines)]
         sys.stderr.write(f"expected:\n {expected_ten_lines}\n")

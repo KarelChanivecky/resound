@@ -1,8 +1,8 @@
 import math
 
-from consumer import Consumer
+from abstracts_interfaces.abstract_consumer import AbstractConsumer
 from musical_note import MusicalNote
-from producer import Producer
+from abstracts_interfaces.abstract_producer import AbstractProducer
 import threading as th
 
 SEMITONE_FREQ_RATIO = math.pow(2, 1 / 12)
@@ -57,7 +57,7 @@ def get_note(freq, A4_frequency):
     return MusicalNote(semitones_diff, octave, delta)
 
 
-class NoteIdentifier(Producer, Consumer):
+class NoteIdentifier(AbstractProducer, AbstractConsumer):
     """
     A consumer that identifies a musical note given a frequency.
 
@@ -79,8 +79,8 @@ class NoteIdentifier(Producer, Consumer):
 
         :param consumer: The consumer of the data produced by this class
         """
-        Producer.__init__(self, consumer)
-        Consumer.__init__(self, buffer_size)
+        AbstractProducer.__init__(self, consumer)
+        AbstractConsumer.__init__(self, buffer_size)
         self.__thread = th.Thread(target=self._consume)
         self.producing = False
         self.consuming = False
@@ -96,23 +96,23 @@ class NoteIdentifier(Producer, Consumer):
             freq = self._buffer.get()
             self._produce(get_note(freq, self.A4_frequency))
             self._consumer_semaphore.release()
-        self.stop_producing()
+        self.stop()
 
     def set_A4_frequency(self, new_A4_frequency):
         self.A4_frequency = new_A4_frequency
 
-    def start_producing(self):
+    def start(self):
         self.producing = True
-        self._consumer.start_consuming()
+        self._consumer.start()
 
-    def stop_producing(self):
+    def stop(self):
         self.producing = False
-        self._consumer.stop_consuming()
+        self._consumer.stop()
 
-    def start_consuming(self):
+    def start(self):
         self.consuming = True
-        self.start_producing()
+        self.start()
         self.__thread.start()
 
-    def stop_consuming(self):
+    def stop(self):
         self.consuming = False
