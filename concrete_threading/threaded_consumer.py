@@ -25,15 +25,15 @@ class ThreadedConsumer(AbstractConsumer):
         self._thread = threading.Thread(target=self._consume, daemon=True)
 
     def _consume(self):
-        while self._consuming:
+        while self._running:
             self._producer_semaphore.acquire()
             item = self._buffer.get()
             self._process.run(item)
             self._consumer_semaphore.release()
 
     def start(self):
-        self._consuming = True
+        self._running = True
         self._thread.start()
 
     def stop(self):
-        self._consuming = False
+        self._running = False

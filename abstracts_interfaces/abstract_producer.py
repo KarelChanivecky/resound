@@ -1,40 +1,22 @@
-from abstract_consumer import AbstractConsumer
-from process_interface import ProcessInterface
+from abstracts_interfaces.abstract_consumer import AbstractConsumer
+from abstracts_interfaces.process import Process
+from abstracts_interfaces.runnable import Runnable
 
 
-class AbstractProducer:
+class AbstractProducer(Runnable):
     """
     Interface for producer
     """
-    def __init__(self, consumer: AbstractConsumer, process: ProcessInterface):
+    def __init__(self, consumer: AbstractConsumer, process: Process):
+        Runnable.__init__(self, process)
         self._consumer = consumer
-        self._producing = False
-        self._process = process
 
     def set_consumer(self, consumer):
         """
         Set the consumer for this producer
         :param consumer: a Consumer
         """
-        if self._producing:
+        if self._running:
             raise RuntimeError("Cannot change consumer while producing")
         self._consumer = consumer
 
-    def start(self):
-        """
-        Start producing. Ensure to set consumer to start consuming.
-        """
-        pass
-
-    def stop(self):
-        """
-        Stop producing. Ensure to set consumer to stop consuming
-        """
-        pass
-
-    def _produce(self):
-        """
-        Pass an object to consumer.
-        :param obj: any
-        """
-        pass
