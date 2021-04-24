@@ -1,27 +1,26 @@
 import queue
 import threading
 
-from process_interface import ProcessInterface
+from abstracts_interfaces.process import Process
+from abstracts_interfaces.runnable import Runnable
 
 
-class AbstractConsumer:
+class AbstractConsumer(Runnable):
     """
     Interface for a consumer
     """
 
-    def __init__(self, buffer_size, process: ProcessInterface) -> None:
+    def __init__(self, buffer_size, process: Process) -> None:
         """
         Initialize a consumer.
 
         :param buffer_size: The size of the queue buffer for objects awaiting to be consumed
         :param process: The process by which the objects are consumed
         """
-        super().__init__()
+        Runnable.__init__(self, process)
         self._buffer = queue.Queue()
         self._producer_semaphore = threading.Semaphore()
         self._consumer_semaphore = threading.Semaphore(buffer_size)
-        self._consuming = False
-        self._process = process
 
     def give(self, obj):
         """
@@ -33,21 +32,3 @@ class AbstractConsumer:
         self._consumer_semaphore.acquire()
         self._buffer.put(obj)
         self._producer_semaphore.release()
-
-    def _consume(self):
-        """
-        Consume from buffer
-        """
-        pass
-
-    def start(self):
-        """
-        Start consuming.
-        """
-        pass
-
-    def stop(self):
-        """
-        Stop consuming
-        """
-        pass

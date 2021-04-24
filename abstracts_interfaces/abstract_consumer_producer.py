@@ -1,6 +1,6 @@
-from abstract_consumer import AbstractConsumer
-from abstract_producer import AbstractProducer
-from process_interface import ProcessInterface
+from abstracts_interfaces.abstract_consumer import AbstractConsumer
+from abstracts_interfaces.abstract_producer import AbstractProducer
+from abstracts_interfaces.process import Process
 
 
 class AbstractConsumerProducer(AbstractConsumer, AbstractProducer):
@@ -9,15 +9,16 @@ class AbstractConsumerProducer(AbstractConsumer, AbstractProducer):
     AbstractProducer
     """
 
-    def __init__(self, buffer_size, consumer: AbstractConsumer, process: ProcessInterface) -> None:
-        super().__init__(buffer_size, process)
+    def __init__(self, buffer_size, consumer: AbstractConsumer, process: Process) -> None:
+        AbstractConsumer.__init__(self, buffer_size, process)
+        AbstractProducer.__init__(self, consumer, process)
         self._consumer = consumer
 
     def give(self, obj):
         super().give(obj)
 
     def _consume(self):
-        super()._consume()
+        super()._run()
 
     def start(self):
         super().start()
@@ -27,5 +28,3 @@ class AbstractConsumerProducer(AbstractConsumer, AbstractProducer):
 
     def set_consumer(self, consumer):
         super().set_consumer(consumer)
-
-

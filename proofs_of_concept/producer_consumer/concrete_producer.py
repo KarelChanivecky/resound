@@ -1,24 +1,23 @@
-import sys
 from time import sleep
 
-from producer import Producer
+from abstracts_interfaces.abstract_producer import AbstractProducer
 import threading as th
 
 
-class ConcreteProducer(Producer):
+class ConcreteProducer(AbstractProducer):
     def __init__(self, consumer, sleep_time):
         super().__init__(consumer)
         self._thread = th.Thread(target=self.factory, daemon=True)
         self._sleep_time = sleep_time
 
-    def start_producing(self):
+    def start(self):
         self._producing = True
         self._thread.start()
-        self._consumer.start_consuming()
+        self._consumer.start()
 
-    def stop_producing(self):
+    def stop(self):
         self._producing = False
-        self._consumer.stop_consuming()
+        self._consumer.stop()
 
     def factory(self):
         index = 1

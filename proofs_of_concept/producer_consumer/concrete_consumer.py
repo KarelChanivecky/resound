@@ -1,12 +1,11 @@
 from time import sleep
-import sys
-from consumer import Consumer
+from abstracts_interfaces.abstract_consumer import AbstractConsumer
 import threading as th
 
 
-class ConcreteConsumer(Consumer):
+class ConcreteConsumer(AbstractConsumer):
     def __init__(self, buffer_size, sleep_time):
-        Consumer.__init__(self, buffer_size)
+        AbstractConsumer.__init__(self, buffer_size)
         self.thread = th.Thread(target=self._consume, daemon=True)
         self.sleep_time = sleep_time
 
@@ -18,6 +17,6 @@ class ConcreteConsumer(Consumer):
             print(f"Consumer did it {item} times")
             self._consumer_semaphore.release()
 
-    def start_consuming(self):
+    def start(self):
         self._consuming = True
         self.thread.start()
