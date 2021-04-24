@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from musical_note import MusicalNote
-from note_identifier import get_note, get_semitone_diff
+from processes.note_identifier import get_note, get_semitone_diff
 
 
 class TestNoteIdentifier(TestCase):
