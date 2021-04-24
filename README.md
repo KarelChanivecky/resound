@@ -3,6 +3,10 @@
 By: Karel Chanivecky Garcia
 
 ## VERSION:
+- 0.65: Refactor consumer/producer classes to reduce code duplication and boilerplating
+  - Implemented a multiple-inheritance hierarchy for the threaded consumer and producer
+  - Implemented a Strategy pattern to modify the behaviour of instantiated consumers and producers
+  - Modified integration and unit tests to reflect the changes
 - 0.6: Musical notes are now identified in reference to note
 - 0.5: Recorder, Frequency identification, basic program entry point implemented
 
@@ -26,9 +30,8 @@ By: Karel Chanivecky Garcia
 - Musical note identification integration tested
 
 ## SOON TO COME:
-- Tuner UI
+- Basic tuner UI
 - Optimization of frequency identification accuracy
-- Refactor consumer/producer classes to reduce code duplication and boilerplating
 
 ## KNOWN LIMITATIONS:
 - It is not accurate enough to use professionally; empirical optimization of parameters ensues to achieve desired results
