@@ -72,11 +72,13 @@ class FrequencyExtractor(Process):
         default_kwargs = {
             "fft_size": DEFAULT_FFT_SIZE,
             "target_z_score": DEFAULT_TARGET_Z_SCORE,
+            "norm": None,
             "window": scipy_win.hann(DEFAULT_FFT_SIZE, sym=False)
         }
         kwargs = {**default_kwargs, **kwargs}
         self.__fft_size = kwargs["fft_size"]
         self.__target_z_score = kwargs["target_z_score"]
+        self.__norm = kwargs["norm"]
         self.__window = kwargs["window"]
 
     def run(self, sound_sample=None):
@@ -142,7 +144,7 @@ class FrequencyExtractor(Process):
 
         :return: A list of real numbers, the values of amplitude across frequency in an instant
         """
-        complex_amplitudes = np.fft.rfft(samples, n=self.__fft_size)
+        complex_amplitudes = np.fft.rfft(samples, n=self.__fft_size, norm=self.__norm)
         complex_amplitudes[1:] = 2 * complex_amplitudes[1:]
         real_amplitudes = np.abs(complex_amplitudes)
         return real_amplitudes
@@ -155,7 +157,7 @@ class FrequencyExtractor(Process):
         :return: A double, The fundamental frequency
         """
         samples = sound_sample.get_samples()
-        cropped_samples = samples[:DEFAULT_FFT_SIZE]
+        cropped_samples = samples[:self.__fft_size]
         normalized_samples = _normalize_32b(cropped_samples)
         windowed_samples = self.__window_samples(normalized_samples)
         amplitudes = self.__get_spectrum(windowed_samples)
