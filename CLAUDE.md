@@ -34,7 +34,7 @@ src/
 ├── sound_sample.py   # Data model: raw samples + sample rate + duration
 └── main.py           # Wires the pipeline: Recorder → FrequencyExtractor → NoteIdentifier → ConsolePrinter
 tests/
-├── unit_tests/       # Collected and run by pytest
+├── unit_tests/       # unittest suite — run with python -m unittest discover
 └── integration/      # Manual scripts — require a microphone, not run in CI
 proofs_of_concept/    # Exploratory code; not part of the main pipeline
 ```
@@ -58,7 +58,7 @@ proofs_of_concept/    # Exploratory code; not part of the main pipeline
 - Every new `Process` subclass needs unit tests in `tests/unit_tests/`
 - Use synthetic audio (numpy-generated arrays) rather than microphone hardware in tests
 - `tests/integration/` scripts are manual-only and are excluded from CI
-- The full test suite runs with `pytest` from the repo root
+- The full test suite runs with `PYTHONPATH=src python -m unittest discover -s tests -p "test_*.py"`
 - Use Python 3.14t (free-threaded build) — without it the GIL serialises the pipeline threads and the concurrency model is not actually exercised
 
 ---
@@ -94,7 +94,7 @@ TYPE: Short imperative description
 
 ### Before starting work
 1. Read every file you expect to touch
-2. Run `pytest` and note how many tests pass — this is your baseline
+2. Run `PYTHONPATH=src python -m unittest discover -s tests -p "test_*.py"` and note how many tests pass — this is your baseline
 
 ### While working
 3. New domain logic goes in `processes/` as a `Process` subclass
@@ -103,5 +103,5 @@ TYPE: Short imperative description
 6. Keep changes minimal — do not refactor surrounding code unless that is the explicit task
 
 ### After finishing work
-7. Run `pytest` — all tests that passed at baseline must still pass; new code must be covered
+7. Run `PYTHONPATH=src python -m unittest discover -s tests -p "test_*.py"` — all tests that passed at baseline must still pass; new code must be covered
 8. Commit using the `TYPE: description` format above

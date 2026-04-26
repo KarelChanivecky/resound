@@ -54,10 +54,10 @@ Records audio from the default microphone and prints the closest musical note to
 ## Running Tests
 
 ```bash
-pytest
+PYTHONPATH=src python -m unittest discover -s tests -p "test_*.py"
 ```
 
-Unit tests cover frequency extraction (peak detection, Gaussian interpolation, amplitude thresholding) and note identification. All tests use synthetic audio generated with NumPy; no microphone is required. Integration tests in `tests/integration/` are run manually.
+Unit tests cover frequency extraction (peak detection, Gaussian interpolation, amplitude thresholding), note identification, recording, and console output. All tests use synthetic audio generated with NumPy; no microphone is required. Integration tests in `tests/integration/` are run manually and require hardware.
 
 ## Version History
 
