@@ -59,6 +59,7 @@ proofs_of_concept/    # Exploratory code; not part of the main pipeline
 - Use synthetic audio (numpy-generated arrays) rather than microphone hardware in tests
 - `tests/integration/` scripts are manual-only and are excluded from CI
 - The full test suite runs with `pytest` from the repo root
+- Use Python 3.14t (free-threaded build) — without it the GIL serialises the pipeline threads and the concurrency model is not actually exercised
 
 ---
 

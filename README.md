@@ -33,7 +33,8 @@ src/
 
 ## Requirements
 
-- Python 3.11+
+- Python 3.14t (free-threaded build, GIL disabled) — **recommended**; without it the pipeline stages share the GIL and the threaded implementation runs effectively single-threaded
+- Python 3.11+ works for running the code but defeats the purpose of the threading model
 - A working microphone
 
 ## Installation
