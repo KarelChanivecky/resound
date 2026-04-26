@@ -2,41 +2,58 @@
 
 By: Karel Chanivecky Garcia
 
-## VERSION:
-- 0.65: Refactor consumer/producer classes to reduce code duplication and boilerplating
-  - Implemented a multiple-inheritance hierarchy for the threaded consumer and producer
-  - Implemented a Strategy pattern to modify the behaviour of instantiated consumers and producers
-  - Modified integration and unit tests to reflect the changes
-- 0.6: Musical notes are now identified in reference to note
-- 0.5: Recorder, Frequency identification, basic program entry point implemented
+Resound listens to your microphone and identifies the musical note being played in real time. It uses FFT-based frequency analysis with Gaussian interpolation and a threaded producer/consumer pipeline to keep recording, processing, and output stages decoupled.
 
-## LEARNING GOALS:
-- Apply threading synchronization to a useful, practical problem using a consumer/producer pattern
-- Explore numpy and scipy functionality
-- Gain better understanding of signal windowing and Discrete Fourier Transforms
-- Apply knowledge obtained in statistics course
-- Deepen understanding of programing in python through the use of procedural and OO paradigms
-- Learn UI implementation with Python
-- Learn how to use record and play sound with python
+## Requirements
 
-## CURRENT STATE:
-- Threading synchronization pattern is implemented
-- Recording is implemented. sound_device library was selected to record sound from microphone
-- Frequency identification is implemented
-- Integration test between recording and frequency identification modules
-- Frequency identification module is unit tested
-- Musical note identification based on frequency identified
-- Musical note identification unit tested
-- Musical note identification integration tested
+- Python 3.11+
+- A working microphone
 
-## SOON TO COME:
+## Installation
+
+```bash
+pip install -r requirements.txt
+```
+
+## Usage
+
+```bash
+python src/main.py
+```
+
+The program captures audio from your default microphone, extracts the fundamental frequency using a windowed FFT, and prints the closest musical note to the console. Press `Ctrl+C` to stop.
+
+## Running Tests
+
+```bash
+pytest
+```
+
+Unit tests cover frequency extraction (peak detection, Gaussian interpolation, amplitude thresholding) and musical note identification. Integration tests in `tests/integration/` require a microphone and are run manually.
+
+## How It Works
+
+1. **Recording** — `sounddevice` captures audio chunks from the microphone at a configurable sample rate and duration.
+2. **Frequency extraction** — samples are normalized, a Hann window is applied to reduce spectral leakage, and an FFT is computed. Peaks above a z-score threshold are selected; the fundamental frequency is refined with Gaussian interpolation.
+3. **Note identification** — the frequency is mapped to the nearest equal-temperament note (A4 = 440 Hz) with a cent-level delta.
+4. **Threading** — stages run on independent threads connected by semaphore-guarded queues, implementing a producer/consumer pattern.
+
+## Version History
+
+- **0.65** — Refactored consumer/producer classes using multiple inheritance and the Strategy pattern to eliminate boilerplate
+- **0.6** — Musical notes identified relative to a configurable reference pitch
+- **0.5** — Core pipeline implemented: recording, frequency identification, and program entry point
+
+## Roadmap
+
 - Basic tuner UI
-- Optimization of frequency identification accuracy
+- Empirical optimization of frequency identification accuracy
 
-## KNOWN LIMITATIONS:
-- It is not accurate enough to use professionally; empirical optimization of parameters ensues to achieve desired results
+## Known Limitations
 
-## BIBLIOGRAPHY:
+- Not accurate enough for professional use; parameter tuning is ongoing
+
+## Bibliography
 
 - Improving FFT resolution. J. Marsar. 2015<br>
   http://www.add.ece.ufl.edu/4511/references/ImprovingFFTResoltuion.pdf

@@ -19,8 +19,8 @@ class Test(TestCase):
         A_wave = np.sin(A_frequency * 2 * np.pi * time_space)
         A_wave *= A_amplitude
         noise_amplitude = 1
-        noise = np.random.normal(size=sample_rate * length, scale=1, loc=noise_amplitude)
-        A_wave *= noise
+        noise = np.random.normal(size=sample_rate * length, scale=noise_amplitude)
+        A_wave += noise
         sound_sample = SoundSample(sample_rate, length, A_wave)
         identified_freq = FrequencyExtractionProcess().run(sound_sample)
         self.assertAlmostEqual(identified_freq, A_frequency, delta=2)
