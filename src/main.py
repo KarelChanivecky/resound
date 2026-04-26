@@ -9,9 +9,15 @@ from processes.frequency_extractor import FrequencyExtractor
 from processes.console_printer import ConsolePrinter
 from processes.note_identifier import NoteIdentifier
 from processes.recorder import Recorder
+from processes.synthesizer import Synthesizer
+from note_spec import parse_note_specs
 
 _WINDOWS_WITH_NO_PARAMS = {'hann', 'hamming', 'blackman', 'blackmanharris', 'boxcar', 'flattop'}
 _WINDOWS_ALL = _WINDOWS_WITH_NO_PARAMS | {'kaiser', 'tukey'}
+
+# Synthesizer defaults mirror the Recorder(2500, 0.5) settings used in recorder mode.
+_SYNTH_SAMPLE_RATE = 5000
+_SYNTH_SAMPLE_DURATION = 0.5
 
 
 def _positive_int(value):
@@ -28,8 +34,19 @@ def _nonneg_float(value):
     return x
 
 
-def _parse_args():
+def _parse_args(args=None):
     p = argparse.ArgumentParser(description='Resound — musical instrument tuner')
+
+    # Audio source
+    p.add_argument('--source', choices=['recorder', 'synth'], default='recorder',
+                   help='audio source: microphone recorder or synthesizer (default: recorder)')
+    p.add_argument('--notes', default=None, metavar='SPEC',
+                   help='note spec for synth source, e.g. "A45,C#37:5" '
+                        '(required when --source synth)')
+    p.add_argument('--snr', type=_nonneg_float, default=0.0, metavar='DB',
+                   help='signal-to-noise ratio in dB for synth noise; 0 = no noise (default: 0)')
+
+    # FFT / signal-processing parameters
     p.add_argument('--fft-size', type=_positive_int, default=2048, metavar='N',
                    help='FFT size in samples, must be > 0 (default: 2048)')
     p.add_argument('--zscore', type=_nonneg_float, default=3.0, metavar='Z',
@@ -43,7 +60,13 @@ def _parse_args():
                    help='shape parameter for the kaiser window (default: 5.0)')
     p.add_argument('--alpha', type=float, default=0.5, metavar='ALPHA',
                    help='taper fraction for the tukey window, 0..1 (default: 0.5)')
-    return p.parse_args()
+
+    namespace = p.parse_args(args)
+
+    if namespace.source == 'synth' and namespace.notes is None:
+        p.error('--notes is required when --source is synth')
+
+    return namespace
 
 
 def _build_window(args):
@@ -54,6 +77,16 @@ def _build_window(args):
     else:
         window_spec = args.window
     return scipy_win.get_window(window_spec, args.fft_size, fftbins=True)
+
+
+def _build_audio_source(args):
+    if args.source == 'synth':
+        notes = parse_note_specs(args.notes)
+        # Guarantee the sample has at least fft_size samples so windowing never fails.
+        min_duration = args.fft_size / _SYNTH_SAMPLE_RATE
+        sample_duration = max(_SYNTH_SAMPLE_DURATION, min_duration)
+        return Synthesizer(notes, _SYNTH_SAMPLE_RATE, sample_duration, snr=args.snr)
+    return Recorder(2500, 0.5)
 
 
 def main():
@@ -69,7 +102,7 @@ def main():
                            target_z_score=args.zscore,
                            norm=norm,
                            window=window))
-    record_producer = ThreadedProducer(freq_extractor, Recorder(2500, 0.5))
+    record_producer = ThreadedProducer(freq_extractor, _build_audio_source(args))
     record_producer.start()
 
 

@@ -69,17 +69,11 @@ class FrequencyExtractor(Process):
     """
 
     def __init__(self, **kwargs) -> None:
-        default_kwargs = {
-            "fft_size": DEFAULT_FFT_SIZE,
-            "target_z_score": DEFAULT_TARGET_Z_SCORE,
-            "norm": None,
-            "window": scipy_win.hann(DEFAULT_FFT_SIZE, sym=False)
-        }
-        kwargs = {**default_kwargs, **kwargs}
-        self.__fft_size = kwargs["fft_size"]
-        self.__target_z_score = kwargs["target_z_score"]
-        self.__norm = kwargs["norm"]
-        self.__window = kwargs["window"]
+        self.__fft_size = kwargs.get("fft_size", DEFAULT_FFT_SIZE)
+        self.__target_z_score = kwargs.get("target_z_score", DEFAULT_TARGET_Z_SCORE)
+        self.__norm = kwargs.get("norm", None)
+        # Default window matches fft_size so resizing fft_size never produces a mismatch.
+        self.__window = kwargs.get("window", scipy_win.hann(self.__fft_size, sym=False))
 
     def run(self, sound_sample=None):
         return self.__get_fundamental_frequency(sound_sample)
