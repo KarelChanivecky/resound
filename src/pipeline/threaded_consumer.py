@@ -1,6 +1,6 @@
 import threading
 
-from abstracts_interfaces.abstract_consumer import AbstractConsumer
+from interfaces.abstract_consumer import AbstractConsumer
 
 
 class ThreadedConsumer(AbstractConsumer):

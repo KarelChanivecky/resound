@@ -1,6 +1,6 @@
 import math
 
-from abstracts_interfaces.process import Process
+from interfaces.process import Process
 from musical_note import MusicalNote
 
 SEMITONE_FREQ_RATIO = math.pow(2, 1 / 12)
@@ -11,7 +11,7 @@ DEFAULT_A4_FREQ = 440
 
 def get_semitone_diff(freq, reference_freq):
     """
-    Get the number of semitones away from freq1 relative to freq2.
+    Get the number of semitones away from freq relative to reference_freq.
 
     :param freq: float
     :param reference_freq: float
@@ -21,22 +21,22 @@ def get_semitone_diff(freq, reference_freq):
     return math.log(freq_ratio, SEMITONE_FREQ_RATIO)
 
 
-def get_note(freq, A4_frequency):
+def identify_note(freq, a4_frequency):
     """
     Get a MusicalNote for a given frequency.
 
     :param freq: a double greater than 0
-    :param A4_frequency: The frequency of A4
+    :param a4_frequency: The frequency of A4
     :return: a MusicalNote
     """
     if freq < 0:
         return
 
-    semitones_diff = get_semitone_diff(freq, A4_frequency)
+    semitones_diff = get_semitone_diff(freq, a4_frequency)
     octave = INITIAL_OCTAVE
-    full_octaves_from_A4 = int(semitones_diff / SEMITONES_IN_SCALE)
-    octave += full_octaves_from_A4
-    semitones_diff -= full_octaves_from_A4 * SEMITONES_IN_SCALE
+    full_octaves_from_a4 = int(semitones_diff / SEMITONES_IN_SCALE)
+    octave += full_octaves_from_a4
+    semitones_diff -= full_octaves_from_a4 * SEMITONES_IN_SCALE
     if semitones_diff < 0:
         octave -= 1
         semitones_diff = 12 + semitones_diff
@@ -55,34 +55,27 @@ def get_note(freq, A4_frequency):
     return MusicalNote(semitones_diff, octave, delta)
 
 
-class NoteIdentifierProcess(Process):
+class NoteIdentifier(Process):
     """
-    A consumer that identifies a musical note given a frequency.
+    Identifies the musical note corresponding to a given frequency.
 
-    This NoteIdentifier uses the equal tempered scale of 12 semitones.
-    The notes identified in reference to the frequency of A4, which by default is 440Hz.
+    Uses the equal-tempered scale of 12 semitones, with notes identified
+    relative to A4 (440 Hz by default).
 
-    The difference in semitones between the given note and the reference is determined by the formula:
-    diff(frG) = log(frG / frR) / log(2^(1/12))
-
+    The semitone distance from A4 is computed as:
+    diff(f) = log(f / f_A4) / log(2^(1/12))
     """
 
-    def __init__(self, A4_frequency=DEFAULT_A4_FREQ):
+    def __init__(self, a4_frequency=DEFAULT_A4_FREQ):
         """
-        Construct instance of Frequency FrequencyExtractor.
+        Construct a NoteIdentifier.
 
-        This class is a producer/consumer.
-
-        :param consumer: The consumer of the data produced by this class
+        :param a4_frequency: The reference frequency for A4 in Hz
         """
-        self.A4_frequency = A4_frequency
+        self.a4_frequency = a4_frequency
 
     def run(self, freq=None):
-        """
-        Consume from buffer.
-        """
-        return get_note(freq, self.A4_frequency)
+        return identify_note(freq, self.a4_frequency)
 
-    def set_A4_frequency(self, new_A4_frequency):
-        self.A4_frequency = new_A4_frequency
-
+    def set_a4_frequency(self, a4_frequency):
+        self.a4_frequency = a4_frequency

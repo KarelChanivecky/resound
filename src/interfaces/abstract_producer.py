@@ -1,6 +1,6 @@
-from abstracts_interfaces.abstract_consumer import AbstractConsumer
-from abstracts_interfaces.process import Process
-from abstracts_interfaces.runnable import Runnable
+from interfaces.abstract_consumer import AbstractConsumer
+from interfaces.process import Process
+from interfaces.runnable import Runnable
 
 
 class AbstractProducer(Runnable):

@@ -24,7 +24,7 @@ This extractor targets frequencies between 16Hz (C0) and 8000Hz (B8)
 import numpy as np
 import scipy.signal.windows as scipy_win
 
-from abstracts_interfaces.process import Process
+from interfaces.process import Process
 from sound_sample import SoundSample
 
 # constants:
@@ -32,23 +32,23 @@ DEFAULT_FFT_SIZE = 2048
 DEFAULT_TARGET_Z_SCORE = 3
 
 
-def _gaussian_interpolation(amplitudes, target_amplitude, fft_freq_resolution):
+def _gaussian_interpolation(amplitudes, peak_bin, fft_freq_resolution):
     """
-    Interpolate the frequency of the target_amplitude.
+    Interpolate the frequency of the peak bin.
 
     :param amplitudes: A list of real numbers
-    :param target_amplitude: The index of the amplitude for which to interpolate the frequency
+    :param peak_bin: The index of the peak bin for which to interpolate the frequency
     :param fft_freq_resolution: The difference in frequency between each fft bin
-    :return: The frequency of the peak. -1 if 1 <= target_amplitude
+    :return: The frequency of the peak. -1 if peak_bin < 1 or out of range
     """
-    if target_amplitude < 1 or len(amplitudes) <= target_amplitude:
+    if peak_bin < 1 or len(amplitudes) <= peak_bin:
         return -1
 
-    top = np.log(amplitudes[target_amplitude + 1] / amplitudes[target_amplitude - 1])
-    bottom = 2 * np.log(amplitudes[target_amplitude] ** 2 /
-                        (amplitudes[target_amplitude + 1] * amplitudes[target_amplitude - 1]))
+    top = np.log(amplitudes[peak_bin + 1] / amplitudes[peak_bin - 1])
+    bottom = 2 * np.log(amplitudes[peak_bin] ** 2 /
+                        (amplitudes[peak_bin + 1] * amplitudes[peak_bin - 1]))
     delta = top / bottom
-    return fft_freq_resolution * (delta + target_amplitude)
+    return fft_freq_resolution * (delta + peak_bin)
 
 
 def _normalize_32b(amplitudes):
@@ -63,29 +63,23 @@ def _normalize_32b(amplitudes):
     return [(amp / max_amp) * half_range for amp in amplitudes]
 
 
-class FrequencyExtractionProcess(Process):
+class FrequencyExtractor(Process):
     """
-    A consumer that extracts the base frequency in a SoundSample
+    Extracts the fundamental frequency from a SoundSample.
     """
 
     def __init__(self, **kwargs) -> None:
-        K_FFT_SIZE = "fft_size"
-        K_TARGET_Z_SCORE = "target_z_score"
-        K_WINDOW = "window"
         default_kwargs = {
-            K_FFT_SIZE: DEFAULT_FFT_SIZE,
-            K_TARGET_Z_SCORE: DEFAULT_TARGET_Z_SCORE,
-            K_WINDOW: scipy_win.hann(DEFAULT_FFT_SIZE, sym=False)
+            "fft_size": DEFAULT_FFT_SIZE,
+            "target_z_score": DEFAULT_TARGET_Z_SCORE,
+            "window": scipy_win.hann(DEFAULT_FFT_SIZE, sym=False)
         }
         kwargs = {**default_kwargs, **kwargs}
-        self.__fft_size = kwargs[K_FFT_SIZE]
-        self.__target_z_score = kwargs[K_TARGET_Z_SCORE]
-        self.__window = kwargs[K_WINDOW]
+        self.__fft_size = kwargs["fft_size"]
+        self.__target_z_score = kwargs["target_z_score"]
+        self.__window = kwargs["window"]
 
     def run(self, sound_sample=None):
-        """
-        Consume from buffer.
-        """
         return self.__get_fundamental_frequency(sound_sample)
 
     def __get_amplitude_threshold(self, amplitudes):
@@ -102,10 +96,10 @@ class FrequencyExtractionProcess(Process):
 
     def __select_peaks(self, amplitudes):
         """
-        Select the indexes of the peak amplitudes
+        Select the indexes of the peak amplitudes.
 
-        :param amplitudes: A list of tuples: (freq, amp)
-        :return: The peaks.  A list of tuples: (freq, amp)
+        :param amplitudes: A list of amplitude values
+        :return: A list of bin indexes whose amplitude exceeds the threshold
         """
         amplitude_threshold = self.__get_amplitude_threshold(amplitudes)
         peaks = []
@@ -136,7 +130,7 @@ class FrequencyExtractionProcess(Process):
 
     def __window_samples(self, amplitudes):
         """
-        Apply a window to the given sample
+        Apply a window to the given sample.
 
         :param amplitudes: A list of real numbers
         """
@@ -144,7 +138,7 @@ class FrequencyExtractionProcess(Process):
 
     def __get_spectrum(self, samples):
         """
-        Get the frequency spectrum of the sample
+        Get the frequency spectrum of the sample.
 
         :return: A list of real numbers, the values of amplitude across frequency in an instant
         """

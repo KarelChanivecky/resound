@@ -1,4 +1,4 @@
-from abstracts_interfaces.process import Process
+from interfaces.process import Process
 
 
 class Runnable:

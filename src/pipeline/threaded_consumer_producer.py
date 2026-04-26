@@ -1,8 +1,8 @@
 import threading
 
-from abstracts_interfaces.abstract_consumer import AbstractConsumer
-from abstracts_interfaces.abstract_producer import AbstractProducer
-from abstracts_interfaces.process import Process
+from interfaces.abstract_consumer import AbstractConsumer
+from interfaces.abstract_producer import AbstractProducer
+from interfaces.process import Process
 
 
 class ThreadedConsumerProducer(AbstractConsumer, AbstractProducer):

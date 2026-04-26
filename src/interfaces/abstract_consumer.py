@@ -1,8 +1,8 @@
 import queue
 import threading
 
-from abstracts_interfaces.process import Process
-from abstracts_interfaces.runnable import Runnable
+from interfaces.process import Process
+from interfaces.runnable import Runnable
 
 
 class AbstractConsumer(Runnable):

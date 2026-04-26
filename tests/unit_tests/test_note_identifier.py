@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from musical_note import MusicalNote
-from processes.note_identifier import get_note, get_semitone_diff
+from processes.note_identifier import identify_note, get_semitone_diff
 
 
 class TestNoteIdentifier(TestCase):
@@ -22,33 +22,33 @@ class TestNoteIdentifier(TestCase):
         # G#4 , 11, 4, +-0
         freq = 415.30
         expected = MusicalNote(11, 4, 0)
-        got = get_note(freq, 440)
+        got = identify_note(freq, 440)
         self.assertTrue(expected == got)
 
     def test_get_note_above_A4(self):
         # C5 , 3, 5, +-0
         expected = MusicalNote(3, 5, 0)
         freq = 523.25
-        got = get_note(freq, 440)
+        got = identify_note(freq, 440)
         self.assertTrue(expected == got)
 
     def test_get_note_delta_to_next_octave(self):
         # C5-0.1 , 3, 4, -0.1
         expected = MusicalNote(3, 5, -0.1)
         freq = 520.2374
-        got = get_note(freq, 440)
+        got = identify_note(freq, 440)
         self.assertTrue(expected == got)
 
     def test_get_note_delta_under_point_five(self):
         # A4-0.1 , 0, 4, -0.1
         expected = MusicalNote(0, 4, -0.1)
         freq = 437.46578
-        got = get_note(freq, 440)
+        got = identify_note(freq, 440)
         self.assertTrue(expected == got)
 
     def test_get_note_delta_above_point_five(self):
         # A4+0.1 , 0, 4, 0.1
         expected = MusicalNote(0, 4, 0.1)
         freq = 442.54889
-        got = get_note(freq, 440)
+        got = identify_note(freq, 440)
         self.assertTrue(expected == got)

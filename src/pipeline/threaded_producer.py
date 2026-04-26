@@ -1,7 +1,7 @@
 import threading
 
-from abstracts_interfaces.abstract_consumer import AbstractConsumer
-from abstracts_interfaces.abstract_producer import AbstractProducer
+from interfaces.abstract_consumer import AbstractConsumer
+from interfaces.abstract_producer import AbstractProducer
 
 
 class ThreadedProducer(AbstractProducer):

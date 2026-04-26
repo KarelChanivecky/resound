@@ -20,7 +20,7 @@ class MusicalNote:
         self._octave = octave
         self._delta = delta
 
-    def get_note(self):
+    def get_semitone(self):
         return self._note
 
     def get_octave(self):
@@ -32,7 +32,7 @@ class MusicalNote:
     def __eq__(self, o) -> bool:
         if o.__class__ != self.__class__:
             return False
-        if self._note != o.get_note():
+        if self._note != o.get_semitone():
             return False
         if self._octave != o.get_octave():
             return False
