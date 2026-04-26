@@ -1,4 +1,10 @@
-import sounddevice as soundd
+try:
+    import sounddevice as soundd
+    _SOUNDDEVICE_AVAILABLE = True
+except OSError:
+    soundd = None
+    _SOUNDDEVICE_AVAILABLE = False
+
 from interfaces.process import Process
 from sound_sample import SoundSample
 
@@ -8,6 +14,7 @@ class Recorder(Process):
     Records audio from the microphone.
 
     Produces one SoundSample per call to run().
+    Requires PortAudio (libportaudio2) at runtime; raises RuntimeError if unavailable.
     """
     __CHANNELS = 1
     __SAMPLE_TYPE = 'int32'
@@ -27,6 +34,11 @@ class Recorder(Process):
         return self.get_sample()
 
     def get_sample(self):
+        if not _SOUNDDEVICE_AVAILABLE:
+            raise RuntimeError(
+                'Recorder requires PortAudio. '
+                'Install it with: sudo apt-get install libportaudio2'
+            )
         return SoundSample(self.__sample_rate, self.__sample_duration,
                            soundd.rec(int(self.__sample_rate * self.__sample_duration),
                                       self.__sample_rate, Recorder.__CHANNELS,

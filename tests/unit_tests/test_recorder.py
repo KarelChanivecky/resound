@@ -3,12 +3,13 @@ import unittest
 from unittest.mock import patch
 import numpy as np
 
-from processes.recorder import Recorder
+from processes.recorder import Recorder, _SOUNDDEVICE_AVAILABLE
 from sound_sample import SoundSample
 
 _HARDWARE_AVAILABLE = bool(os.environ.get('HARDWARE_TESTS'))
 
 
+@unittest.skipUnless(_SOUNDDEVICE_AVAILABLE, 'sounddevice requires PortAudio (libportaudio2)')
 class TestRecorder(unittest.TestCase):
 
     def _make_raw_audio(self, n_frames):
