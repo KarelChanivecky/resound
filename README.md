@@ -1,8 +1,35 @@
-# Resound - A musical instrument tuner
+# Resound
 
 By: Karel Chanivecky Garcia
 
-Resound listens to your microphone and identifies the musical note being played in real time. It uses FFT-based frequency analysis with Gaussian interpolation and a threaded producer/consumer pipeline to keep recording, processing, and output stages decoupled.
+A Python project exploring **producer/consumer threading abstractions**, **statistical signal processing**, and **FFT-based frequency analysis** through the concrete problem of musical instrument tuning.
+
+The tuner — recording audio, extracting the fundamental frequency, identifying the nearest note — is the vehicle for these learning goals, not an end in itself.
+
+## What This Demonstrates
+
+### Producer/consumer pipeline
+Audio processing is decomposed into independent stages connected by semaphore-guarded queues. Each stage runs on its own thread. The pipeline infrastructure (`pipeline/`, `interfaces/`) is fully domain-agnostic: it knows nothing about audio, frequencies, or notes. Domain logic is injected via the Strategy pattern through the `Process` interface.
+
+### Applied statistics
+Frequency peaks are isolated by computing a z-score threshold against the background amplitude distribution, modelling the signal as a point source with high SNR over Gaussian noise. The candidate peak is then refined to sub-bin precision with Gaussian interpolation on the peak and its immediate neighbours.
+
+### FFT and digital signal processing
+A Hann window is applied to the sample before the FFT to reduce spectral leakage. The equal-tempered scale relationship between notes (a constant frequency ratio of 2^(1/12) per semitone) is used to map the identified frequency to the nearest note, with a cent-level delta for detuning.
+
+## Architecture
+
+```
+src/
+├── interfaces/    Abstract contracts — Process, Runnable, AbstractConsumer, AbstractProducer
+├── pipeline/      Threaded pipeline — ThreadedConsumer, ThreadedProducer, ThreadedConsumerProducer
+├── processes/     Domain strategies — FrequencyExtractor, NoteIdentifier, Recorder, ConsolePrinter
+├── musical_note.py    Data model (semitone index, octave, cent delta)
+├── sound_sample.py    Data model (raw samples, sample rate, duration)
+└── main.py            Wires the pipeline
+```
+
+`pipeline/` and `interfaces/` have no imports from `processes/`. All domain-specific logic is encapsulated in `Process` subclasses and can be swapped without changing the threading layer.
 
 ## Requirements
 
@@ -21,7 +48,7 @@ pip install -r requirements.txt
 python src/main.py
 ```
 
-The program captures audio from your default microphone, extracts the fundamental frequency using a windowed FFT, and prints the closest musical note to the console. Press `Ctrl+C` to stop.
+Records audio from the default microphone and prints the closest musical note to the console. Press `Ctrl+C` to stop.
 
 ## Running Tests
 
@@ -29,14 +56,7 @@ The program captures audio from your default microphone, extracts the fundamenta
 pytest
 ```
 
-Unit tests cover frequency extraction (peak detection, Gaussian interpolation, amplitude thresholding) and musical note identification. Integration tests in `tests/integration/` require a microphone and are run manually.
-
-## How It Works
-
-1. **Recording** — `sounddevice` captures audio chunks from the microphone at a configurable sample rate and duration.
-2. **Frequency extraction** — samples are normalized, a Hann window is applied to reduce spectral leakage, and an FFT is computed. Peaks above a z-score threshold are selected; the fundamental frequency is refined with Gaussian interpolation.
-3. **Note identification** — the frequency is mapped to the nearest equal-temperament note (A4 = 440 Hz) with a cent-level delta.
-4. **Threading** — stages run on independent threads connected by semaphore-guarded queues, implementing a producer/consumer pattern.
+Unit tests cover frequency extraction (peak detection, Gaussian interpolation, amplitude thresholding) and note identification. All tests use synthetic audio generated with NumPy; no microphone is required. Integration tests in `tests/integration/` are run manually.
 
 ## Version History
 
@@ -46,12 +66,7 @@ Unit tests cover frequency extraction (peak detection, Gaussian interpolation, a
 
 ## Roadmap
 
-- Basic tuner UI
-- Empirical optimization of frequency identification accuracy
-
-## Known Limitations
-
-- Not accurate enough for professional use; parameter tuning is ongoing
+See [ROADMAP.md](ROADMAP.md).
 
 ## Bibliography
 
