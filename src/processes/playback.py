@@ -13,12 +13,19 @@ from sound_sample import SoundSample
 
 class Playback(Process):
     """
-    Plays a SoundSample through the default audio output device.
+    Plays SoundSamples through the default audio output device as a continuous stream.
+
+    Opens one OutputStream on the first call and writes subsequent samples into
+    the same stream, eliminating the gap that would occur if a new stream were
+    opened for every chunk.
 
     Requires PortAudio (libportaudio2).  Raises RuntimeError if the library is
     unavailable; raises whatever sounddevice raises if no output device can be
     opened.
     """
+
+    def __init__(self):
+        self._stream = None
 
     def run(self, sound_sample: SoundSample = None):
         if not _SOUNDDEVICE_AVAILABLE:
@@ -29,5 +36,15 @@ class Playback(Process):
         if sound_sample is None:
             return
         samples = sound_sample.get_samples().astype(np.float32) / np.iinfo(np.int32).max
-        soundd.play(samples, sound_sample.get_sample_rate())
-        soundd.wait()
+        if self._stream is None:
+            self._stream = soundd.OutputStream(
+                samplerate=sound_sample.get_sample_rate(),
+                channels=1,
+                dtype='float32',
+            )
+            self._stream.start()
+        self._stream.write(samples)
+
+    def __del__(self):
+        if self._stream is not None and self._stream.active:
+            self._stream.close()

@@ -12,39 +12,62 @@ def _make_sample(sample_rate=5000, n_samples=100):
     return SoundSample(sample_rate, n_samples / sample_rate, samples)
 
 
+def _patched_playback(sample):
+    """Run Playback.run(sample) with soundd fully mocked; return (mock_sd, mock_stream)."""
+    mock_sd = MagicMock()
+    mock_stream = MagicMock()
+    mock_stream.active = True
+    mock_sd.OutputStream.return_value = mock_stream
+    with patch('processes.playback.soundd', mock_sd):
+        Playback().run(sample)
+    return mock_sd, mock_stream
+
+
 @unittest.skipUnless(_SOUNDDEVICE_AVAILABLE, 'sounddevice requires PortAudio (libportaudio2)')
 class TestPlayback(unittest.TestCase):
 
-    def _run_with_mocked_sounddevice(self, sample):
-        mock_sd = MagicMock()
-        with patch('processes.playback.soundd', mock_sd):
-            Playback().run(sample)
-        return mock_sd
-
-    def test_run_calls_play_and_wait(self):
-        mock_sd = self._run_with_mocked_sounddevice(_make_sample())
-        mock_sd.play.assert_called_once()
-        mock_sd.wait.assert_called_once()
+    def test_run_opens_stream_and_writes(self):
+        mock_sd, mock_stream = _patched_playback(_make_sample())
+        mock_sd.OutputStream.assert_called_once()
+        mock_stream.start.assert_called_once()
+        mock_stream.write.assert_called_once()
 
     def test_run_normalises_samples_to_float32(self):
-        mock_sd = self._run_with_mocked_sounddevice(_make_sample())
-        data = mock_sd.play.call_args[0][0]
+        _, mock_stream = _patched_playback(_make_sample())
+        data = mock_stream.write.call_args[0][0]
         self.assertEqual(data.dtype, np.float32)
         self.assertLessEqual(np.max(np.abs(data)), 1.0 + 1e-6)
 
-    def test_run_passes_sample_rate(self):
+    def test_run_passes_sample_rate_to_stream(self):
         sample = _make_sample(sample_rate=8000)
-        mock_sd = self._run_with_mocked_sounddevice(sample)
-        rate = mock_sd.play.call_args[0][1]
-        self.assertEqual(rate, 8000)
+        mock_sd, _ = _patched_playback(sample)
+        _, kwargs = mock_sd.OutputStream.call_args
+        self.assertEqual(kwargs['samplerate'], 8000)
 
-    def test_run_with_none_does_not_call_play(self):
-        mock_sd = self._run_with_mocked_sounddevice(None)
-        mock_sd.play.assert_not_called()
+    def test_stream_reused_across_calls(self):
+        mock_sd = MagicMock()
+        mock_stream = MagicMock()
+        mock_stream.active = True
+        mock_sd.OutputStream.return_value = mock_stream
+        sample = _make_sample()
+        with patch('processes.playback.soundd', mock_sd):
+            p = Playback()
+            p.run(sample)
+            p.run(sample)
+        mock_sd.OutputStream.assert_called_once()
+        self.assertEqual(mock_stream.write.call_count, 2)
+
+    def test_run_with_none_does_not_open_stream(self):
+        mock_sd, mock_stream = _patched_playback(None)
+        mock_sd.OutputStream.assert_not_called()
+        mock_stream.write.assert_not_called()
 
     def test_hardware_error_propagates(self):
-        with patch('processes.playback.soundd') as mock_sd:
-            mock_sd.play.side_effect = RuntimeError('no output device')
+        mock_sd = MagicMock()
+        mock_stream = MagicMock()
+        mock_stream.write.side_effect = RuntimeError('no output device')
+        mock_sd.OutputStream.return_value = mock_stream
+        with patch('processes.playback.soundd', mock_sd):
             with self.assertRaises(RuntimeError):
                 Playback().run(_make_sample())
 

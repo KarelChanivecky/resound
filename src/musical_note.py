@@ -2,6 +2,9 @@ import math
 
 DELTA_EQ_TOLERANCE = 0.001
 
+# Semitone index 0 = A, 1 = A#, 2 = B, 3 = C, ... (relative to the octave's A)
+_NOTE_NAMES = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#']
+
 
 class MusicalNote:
     """
@@ -40,13 +43,13 @@ class MusicalNote:
             return False
         return True
 
+    def get_name(self) -> str:
+        return f'{_NOTE_NAMES[self._note]}{self._octave}'
+
     def __str__(self) -> str:
-        return \
-        f"""Musical Note:
-        semitones from A: {self._note}
-        note octave: {self._octave}
-        delta: {self._delta}
-        """
+        delta_cents = round(self._delta * 100)
+        sign = '+' if delta_cents >= 0 else ''
+        return f'{self.get_name()} ({sign}{delta_cents} cents)'
 
 
 
