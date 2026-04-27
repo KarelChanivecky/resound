@@ -16,7 +16,7 @@ Make Resound a better demonstration of producer/consumer threading abstractions,
 - Every new `Process` subclass needs unit tests
 - Prefer synthetic audio tests over microphone hardware
 - Do not change the threading or abstract hierarchy without an issue requesting it
-- All PRs must pass CI (`pytest` from repo root)
+- All PRs must pass CI (`PYTHONPATH=src python -m unittest discover -s tests -p "test_*.py"`)
 - Prefer minimal changes
 
 ## Detailed Agent Instructions
