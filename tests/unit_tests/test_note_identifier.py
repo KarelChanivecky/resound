@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from musical_note import MusicalNote
-from processes.note_identifier import identify_note, get_semitone_diff
+from processes.note_identifier import identify_note, get_semitone_diff, NoteIdentifier
 
 
 class TestNoteIdentifier(TestCase):
@@ -52,3 +52,20 @@ class TestNoteIdentifier(TestCase):
         freq = 442.54889
         got = identify_note(freq, 440)
         self.assertTrue(expected == got)
+
+    def test_negative_frequency_returns_none(self):
+        self.assertIsNone(identify_note(-1, 440))
+
+    def test_zero_frequency_returns_none(self):
+        self.assertIsNone(identify_note(0, 440))
+
+    def test_note_identifier_run_a4(self):
+        note = NoteIdentifier().run(440)
+        self.assertEqual(note.get_semitone(), 0)
+        self.assertEqual(note.get_octave(), 4)
+
+    def test_set_a4_frequency(self):
+        ni = NoteIdentifier()
+        ni.set_a4_frequency(432)
+        note = ni.run(432)
+        self.assertEqual(note.get_semitone(), 0)

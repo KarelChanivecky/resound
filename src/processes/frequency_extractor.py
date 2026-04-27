@@ -41,7 +41,7 @@ def _gaussian_interpolation(amplitudes, peak_bin, fft_freq_resolution):
     :param fft_freq_resolution: The difference in frequency between each fft bin
     :return: The frequency of the peak. -1 if peak_bin < 1 or out of range
     """
-    if peak_bin < 1 or len(amplitudes) <= peak_bin:
+    if peak_bin < 1 or len(amplitudes) - 1 <= peak_bin:
         return -1
 
     top = np.log(amplitudes[peak_bin + 1] / amplitudes[peak_bin - 1])

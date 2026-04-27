@@ -29,7 +29,7 @@ def identify_note(freq, a4_frequency):
     :param a4_frequency: The frequency of A4
     :return: a MusicalNote
     """
-    if freq < 0:
+    if freq is None or freq <= 0:
         return
 
     semitones_diff = get_semitone_diff(freq, a4_frequency)

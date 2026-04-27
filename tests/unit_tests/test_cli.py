@@ -40,7 +40,7 @@ class TestParseArgs(unittest.TestCase):
 
     def test_zscore_parsed(self):
         args = _parse_args(['--zscore', '4.5'])
-        self.assertAlmostEqual(args.zscore, 4.5)
+        self.assertEqual(args.zscore, 4.5)
 
     def test_zscore_negative_rejected(self):
         with self.assertRaises(SystemExit):
@@ -48,7 +48,7 @@ class TestParseArgs(unittest.TestCase):
 
     def test_snr_parsed(self):
         args = _parse_args(['--source', 'synth', '--notes', 'A45', '--snr', '15'])
-        self.assertAlmostEqual(args.snr, 15.0)
+        self.assertEqual(args.snr, 15.0)
 
     def test_window_default_is_hann(self):
         args = _parse_args([])
@@ -57,12 +57,12 @@ class TestParseArgs(unittest.TestCase):
     def test_window_kaiser_parsed(self):
         args = _parse_args(['--window', 'kaiser', '--beta', '8.0'])
         self.assertEqual(args.window, 'kaiser')
-        self.assertAlmostEqual(args.beta, 8.0)
+        self.assertEqual(args.beta, 8.0)
 
     def test_window_tukey_parsed(self):
         args = _parse_args(['--window', 'tukey', '--alpha', '0.3'])
         self.assertEqual(args.window, 'tukey')
-        self.assertAlmostEqual(args.alpha, 0.3)
+        self.assertEqual(args.alpha, 0.3)
 
     def test_fft_norm_parsed(self):
         args = _parse_args(['--fft-norm', 'ortho'])

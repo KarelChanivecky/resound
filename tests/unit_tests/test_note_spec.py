@@ -39,7 +39,7 @@ class TestParseNoteSpecs(unittest.TestCase):
 
     def test_whitespace_around_commas(self):
         specs = parse_note_specs('A45 , B35')
-        self.assertEqual(len(specs), 2)
+        self.assertEqual(specs, [NoteSpec('A', 4, 5, 1), NoteSpec('B', 3, 5, 1)])
 
     def test_invalid_format_raises(self):
         with self.assertRaises(ValueError):
