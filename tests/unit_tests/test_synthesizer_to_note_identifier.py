@@ -9,6 +9,7 @@ Notes at semitone >= 3 (C and above) increment the octave by 1.
 """
 
 import unittest
+import numpy as np
 
 from note_spec import parse_note_specs
 from processes.synthesizer import Synthesizer
@@ -90,3 +91,23 @@ class TestSynthesizerToNoteIdentifier(unittest.TestCase):
         note = _chain('A35,A45,A55,A43:3,A43:5', snr=20, seed=0)
         self.assertEqual(note.get_semitone(), 0)   # A
         self.assertEqual(note.get_octave(), 3)
+
+
+class TestSynthesizerPhaseContinuity(unittest.TestCase):
+    """The end-sample phase of chunk N must equal the start-sample phase of chunk N+1."""
+
+    def test_phase_continuous_across_chunks(self):
+        synth = Synthesizer(
+            parse_note_specs('A45'),
+            sample_rate=_SAMPLE_RATE,
+            sample_duration=_SAMPLE_DURATION,
+        )
+        chunk_a = synth.run().get_samples().astype(np.float64)
+        chunk_b = synth.run().get_samples().astype(np.float64)
+        # The step from the last sample of chunk A to the first of chunk B should
+        # be the same size as a normal within-chunk step.
+        within_step = abs(float(chunk_a[-1]) - float(chunk_a[-2]))
+        boundary_step = abs(float(chunk_b[0]) - float(chunk_a[-1]))
+        # Boundary step should be in the same ballpark as a normal step,
+        # not a large jump back to zero.
+        self.assertLess(boundary_step, within_step * 10)

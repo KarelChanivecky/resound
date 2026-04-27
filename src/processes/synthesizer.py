@@ -28,13 +28,15 @@ class Synthesizer(Process):
         self.__snr = snr
         self.__a4_frequency = a4_frequency
         self.__rng = np.random.default_rng(seed)
+        self.__sample_index = 0
 
     def run(self, _=None) -> SoundSample:
         return self._generate()
 
     def _generate(self) -> SoundSample:
         n = int(self.__sample_rate * self.__sample_duration)
-        t = np.linspace(0, self.__sample_duration, n, endpoint=False)
+        t = (np.arange(n) + self.__sample_index) / self.__sample_rate
+        self.__sample_index += n
 
         signal = np.zeros(n, dtype=np.float64)
         for spec in self.__notes:
