@@ -45,9 +45,10 @@ src/
 ## Installation
 
 ```bash
-pip install -r requirements.txt
+pip install -e .
 ```
 
+This installs all Python dependencies and creates a `resound` command on your `PATH`.
 On Linux, also install the PortAudio system library if you need recorder or playback:
 
 ```bash
@@ -57,6 +58,8 @@ sudo apt-get install libportaudio2
 ## Usage
 
 ```bash
+resound [options]
+# or, without installing:
 python src/main.py [options]
 ```
 
