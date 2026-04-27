@@ -31,6 +31,7 @@ class ThreadedProducer(AbstractProducer):
         Stop producing. Ensure to set consumer to stop consuming
         """
         self._running = False
+        self._consumer.stop()
 
     def _produce(self):
         """
