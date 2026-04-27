@@ -5,9 +5,12 @@ These tests import private helpers (_parse_args, _build_audio_source) directly
 rather than launching a subprocess, keeping them fast and deterministic.
 """
 
+import threading
+import time
 import unittest
+from unittest.mock import patch
 
-from main import _parse_args, _build_audio_source
+from main import _parse_args, _build_audio_source, main
 from processes.recorder import Recorder
 from processes.synthesizer import Synthesizer
 from processes.frequency_extractor import FrequencyExtractor
@@ -130,3 +133,50 @@ class TestCLIPipeline(unittest.TestCase):
                           '--window', 'kaiser', '--beta', '5'])
         self.assertEqual(note.get_semitone(), 0)
         self.assertEqual(note.get_octave(), 4)
+
+
+class TestMainBlocks(unittest.TestCase):
+    """
+    Verify that main() blocks until signalled and then stops the pipeline.
+
+    All pipeline threads are daemon threads, so main() must not return until
+    explicitly stopped — otherwise the process exits and kills them immediately.
+    The test injects a threading.Event via main()'s optional _stop_event parameter
+    so it can unblock main() from the outside without sending real signals.
+    """
+
+    def test_main_blocks_and_stops_on_event(self):
+        import main as main_module
+
+        call_log = []
+
+        class _TrackingProducer:
+            def start(self):
+                call_log.append('start')
+
+            def stop(self):
+                call_log.append('stop')
+
+        def _fake_threaded_producer(upstream, source):
+            return _TrackingProducer()
+
+        stop_event = threading.Event()
+
+        with patch.object(main_module, 'ThreadedProducer', _fake_threaded_producer), \
+             patch('sys.argv', ['resound', '--source', 'synth', '--notes', 'A45']):
+
+            main_thread = threading.Thread(
+                target=lambda: main_module.main(stop_event), daemon=True)
+            main_thread.start()
+
+            time.sleep(0.05)
+            self.assertTrue(main_thread.is_alive(),
+                            'main() returned before being unblocked — it does not block')
+
+            stop_event.set()
+            main_thread.join(timeout=1.0)
+            self.assertFalse(main_thread.is_alive(), 'main() did not return after event was set')
+
+        self.assertIn('start', call_log)
+        self.assertIn('stop', call_log)
+        self.assertLess(call_log.index('start'), call_log.index('stop'))

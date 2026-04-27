@@ -1,4 +1,5 @@
 import argparse
+import threading
 
 import scipy.signal.windows as scipy_win
 
@@ -96,7 +97,7 @@ def _build_audio_source(args):
     return Recorder(2500, 0.5)
 
 
-def main():
+def main(_stop_event=None):
     args = _parse_args()
     norm = None if args.fft_norm == 'backward' else args.fft_norm
     window = _build_window(args)
@@ -117,6 +118,14 @@ def main():
         upstream = freq_extractor
     record_producer = ThreadedProducer(upstream, source)
     record_producer.start()
+
+    stop_event = _stop_event if _stop_event is not None else threading.Event()
+    try:
+        stop_event.wait()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        record_producer.stop()
 
 
 if __name__ == '__main__':
