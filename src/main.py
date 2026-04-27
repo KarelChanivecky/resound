@@ -38,14 +38,29 @@ def _nonneg_float(value):
 
 
 def _parse_args(args=None):
-    p = argparse.ArgumentParser(description='Resound — musical instrument tuner')
+    p = argparse.ArgumentParser(
+        description='Resound — musical instrument tuner',
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
 
     # Audio source
     p.add_argument('--source', choices=['recorder', 'synth'], default='recorder',
                    help='audio source: microphone recorder or synthesizer (default: recorder)')
     p.add_argument('--notes', default=None, metavar='SPEC',
-                   help='note spec for synth source, e.g. "A45,C#37:5" '
-                        '(required when --source synth)')
+                   help=(
+                       'one or more comma-separated note specs (required with --source synth)\n'
+                       '\n'
+                       '  format:    <note><octave><intensity>[:<detune>]\n'
+                       '  note:      A B C D E F G — sharps: A# C# D# F# G#\n'
+                       '  octave:    1–10\n'
+                       '  intensity: 1–10  (relative amplitude; 10 = loudest)\n'
+                       '  detune:    1–10, optional  (1 = in tune, 10 = +25 cents sharp)\n'
+                       '\n'
+                       '  examples:\n'
+                       '    A45          A, octave 4, intensity 5, in tune\n'
+                       '    C#37:5       C#, octave 3, intensity 7, ~14 cents sharp\n'
+                       '    A45,E45      A4 and E4 played simultaneously\n'
+                   ))
     p.add_argument('--snr', type=_nonneg_float, default=0.0, metavar='DB',
                    help='signal-to-noise ratio in dB for synth noise; 0 = no noise (default: 0)')
     p.add_argument('--playback', action='store_true',
