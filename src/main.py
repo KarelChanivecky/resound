@@ -5,9 +5,11 @@ import scipy.signal.windows as scipy_win
 from pipeline.threaded_consumer import ThreadedConsumer
 from pipeline.threaded_consumer_producer import ThreadedConsumerProducer
 from pipeline.threaded_producer import ThreadedProducer
+from pipeline.threaded_t_producer_consumer import ThreadedTConsumerProducer
 from processes.frequency_extractor import FrequencyExtractor
 from processes.console_printer import ConsolePrinter
 from processes.note_identifier import NoteIdentifier
+from processes.playback import Playback
 from processes.recorder import Recorder
 from processes.synthesizer import Synthesizer
 from note_spec import parse_note_specs
@@ -45,6 +47,9 @@ def _parse_args(args=None):
                         '(required when --source synth)')
     p.add_argument('--snr', type=_nonneg_float, default=0.0, metavar='DB',
                    help='signal-to-noise ratio in dB for synth noise; 0 = no noise (default: 0)')
+    p.add_argument('--playback', action='store_true',
+                   help='play the synthesized audio through the default output device '
+                        '(only valid with --source synth)')
 
     # FFT / signal-processing parameters
     p.add_argument('--fft-size', type=_positive_int, default=2048, metavar='N',
@@ -65,6 +70,8 @@ def _parse_args(args=None):
 
     if namespace.source == 'synth' and namespace.notes is None:
         p.error('--notes is required when --source is synth')
+    if namespace.playback and namespace.source != 'synth':
+        p.error('--playback is only supported with --source synth')
 
     return namespace
 
@@ -102,7 +109,13 @@ def main():
                            target_z_score=args.zscore,
                            norm=norm,
                            window=window))
-    record_producer = ThreadedProducer(freq_extractor, _build_audio_source(args))
+    source = _build_audio_source(args)
+    if args.playback:
+        playback_consumer = ThreadedConsumer(2, Playback())
+        upstream = ThreadedTConsumerProducer(10, freq_extractor, playback_consumer)
+    else:
+        upstream = freq_extractor
+    record_producer = ThreadedProducer(upstream, source)
     record_producer.start()
 
 
