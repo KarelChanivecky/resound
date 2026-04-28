@@ -38,4 +38,4 @@ class SpectrumAnalyzer(Process):
         complex_amps[1:] = 2 * complex_amps[1:]
         amplitudes = np.abs(complex_amps)
         freq_resolution = windowed_sample.sample_rate / windowed_sample.fft_size
-        return Spectrum(amplitudes, freq_resolution)
+        return Spectrum(amplitudes, freq_resolution, windowed_sample)

@@ -19,6 +19,12 @@ from processes.synthesizer import Synthesizer
 from processes.windower import Windower
 from note_spec import parse_note_specs
 
+# GUI imports are deferred to avoid pulling in matplotlib when --gui is not used.
+def _import_gui():
+    from gui.resound_gui import ResoundGUI
+    from processes.gui_process import PeaksGUIProcess, NoteGUIProcess
+    return ResoundGUI, PeaksGUIProcess, NoteGUIProcess
+
 _WINDOWS_WITH_NO_PARAMS = {'hann', 'hamming', 'blackman', 'blackmanharris', 'boxcar', 'flattop'}
 _WINDOWS_ALL = _WINDOWS_WITH_NO_PARAMS | {'kaiser', 'tukey'}
 
@@ -85,6 +91,8 @@ def _parse_args(args=None):
                    help='shape parameter for the kaiser window (default: 5.0)')
     p.add_argument('--alpha', type=float, default=0.5, metavar='ALPHA',
                    help='taper fraction for the tukey window, 0..1 (default: 0.5)')
+    p.add_argument('--gui', action='store_true',
+                   help='show the real-time visualization window')
 
     namespace = p.parse_args(args)
 
@@ -122,9 +130,26 @@ def main(_stop_event=None):
     window = _build_window(args)
 
     console_printer = ThreadedConsumer(10, ConsolePrinter())
-    note_identifier = ThreadedConsumerProducer(10, console_printer, NoteIdentifier())
-    freq_interpolator = ConsumerProducer(note_identifier, FrequencyInterpolator())
-    peak_detector = ConsumerProducer(freq_interpolator, PeakDetector(target_z_score=args.zscore))
+
+    if args.gui:
+        ResoundGUI, PeaksGUIProcess, NoteGUIProcess = _import_gui()
+        gui = ResoundGUI()
+
+        # Fan note output to both ConsolePrinter and the GUI note display.
+        note_gui       = ThreadedConsumer(2, NoteGUIProcess(gui))
+        note_sink      = ThreadedTConsumerProducer(4, console_printer, note_gui)
+        note_identifier = ThreadedConsumerProducer(10, note_sink, NoteIdentifier())
+
+        # Fan peak output to FrequencyInterpolator chain and the GUI spectrum display.
+        freq_interpolator = ConsumerProducer(note_identifier, FrequencyInterpolator())
+        peaks_gui  = ThreadedConsumer(2, PeaksGUIProcess(gui))
+        peaks_sink = ThreadedTConsumerProducer(4, freq_interpolator, peaks_gui)
+        peak_detector     = ConsumerProducer(peaks_sink, PeakDetector(target_z_score=args.zscore))
+    else:
+        note_identifier   = ThreadedConsumerProducer(10, console_printer, NoteIdentifier())
+        freq_interpolator = ConsumerProducer(note_identifier, FrequencyInterpolator())
+        peak_detector     = ConsumerProducer(freq_interpolator, PeakDetector(target_z_score=args.zscore))
+
     spectrum_analyzer = ConsumerProducer(peak_detector, SpectrumAnalyzer(norm=norm))
     windower = ThreadedConsumerProducer(
         10, spectrum_analyzer, Windower(fft_size=args.fft_size, window=window))
@@ -137,13 +162,19 @@ def main(_stop_event=None):
     record_producer = ThreadedProducer(upstream, source)
     record_producer.start()
 
-    stop_event = _stop_event if _stop_event is not None else threading.Event()
-    try:
-        stop_event.wait()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        record_producer.stop()
+    if args.gui:
+        try:
+            gui.run()           # blocks in the matplotlib event loop
+        finally:
+            record_producer.stop()
+    else:
+        stop_event = _stop_event if _stop_event is not None else threading.Event()
+        try:
+            stop_event.wait()
+        except KeyboardInterrupt:
+            pass
+        finally:
+            record_producer.stop()
 
 
 if __name__ == '__main__':

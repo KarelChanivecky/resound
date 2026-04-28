@@ -50,6 +50,7 @@ class Windower(Process):
 
         samples = sound_sample.get_samples()
         cropped = samples[:fft_size]
+        raw = cropped.astype(np.float64)
         normalized = _normalize_32b(cropped)
         windowed = normalized * window
-        return WindowedSample(windowed, fft_size, sound_sample.get_sample_rate())
+        return WindowedSample(windowed, fft_size, sound_sample.get_sample_rate(), raw)

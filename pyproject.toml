@@ -12,6 +12,7 @@ dependencies = [
     "numpy>=1.20",
     "scipy>=1.6",
     "sounddevice>=0.4",
+    "matplotlib>=3.5",
 ]
 
 [project.scripts]
@@ -24,4 +25,5 @@ resound = "main:main"
 where = ["src"]
 
 [tool.setuptools]
-py-modules = ["main", "musical_note", "note_spec", "sound_sample"]
+py-modules = ["main", "musical_note", "note_spec", "sound_sample",
+              "windowed_sample", "spectrum", "detected_peaks"]

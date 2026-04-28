@@ -39,8 +39,11 @@ class PeakDetector(Process):
         threshold = np.mean(amplitudes) + target_z_score * np.std(amplitudes)
         above = [b for b in range(len(amplitudes)) if amplitudes[b] > threshold]
 
+        ws = spectrum.windowed_sample
+
         if not above:
-            return DetectedPeaks(amplitudes, [-1], spectrum.freq_resolution)
+            return DetectedPeaks(amplitudes, [-1], spectrum.freq_resolution,
+                                 threshold=threshold, windowed_sample=ws)
 
         peak_bins = []
         cluster = [above[0]]
@@ -52,4 +55,5 @@ class PeakDetector(Process):
                 cluster = [above[i]]
         peak_bins.append(max(cluster, key=lambda b: amplitudes[b]))
 
-        return DetectedPeaks(amplitudes, peak_bins, spectrum.freq_resolution)
+        return DetectedPeaks(amplitudes, peak_bins, spectrum.freq_resolution,
+                             threshold=threshold, windowed_sample=ws)
