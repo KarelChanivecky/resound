@@ -1,3 +1,4 @@
+import threading
 from unittest import TestCase
 
 from musical_note import MusicalNote
@@ -69,3 +70,29 @@ class TestNoteIdentifier(TestCase):
         ni.set_a4_frequency(432)
         note = ni.run(432)
         self.assertEqual(note.get_semitone(), 0)
+
+    def test_concurrent_set_a4_frequency_does_not_raise(self):
+        ni = NoteIdentifier()
+        errors = []
+
+        def setter_loop():
+            for freq in [432, 440, 432, 440]:
+                try:
+                    ni.set_a4_frequency(freq)
+                except Exception as exc:
+                    errors.append(exc)
+
+        def runner_loop():
+            for _ in range(16):
+                try:
+                    ni.run(440)
+                except Exception as exc:
+                    errors.append(exc)
+
+        threads = [threading.Thread(target=setter_loop),
+                   threading.Thread(target=runner_loop)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+        self.assertEqual(errors, [])

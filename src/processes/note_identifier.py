@@ -1,4 +1,5 @@
 import math
+import threading
 
 from interfaces.process import Process
 from musical_note import MusicalNote
@@ -72,10 +73,15 @@ class NoteIdentifier(Process):
 
         :param a4_frequency: The reference frequency for A4 in Hz
         """
-        self.a4_frequency = a4_frequency
+        self.__a4_frequency = a4_frequency
+        self.__lock = threading.Lock()
 
     def run(self, freq=None):
-        return identify_note(freq, self.a4_frequency)
+        with self.__lock:
+            a4_frequency = self.__a4_frequency
+        return identify_note(freq, a4_frequency)
 
     def set_a4_frequency(self, a4_frequency):
-        self.a4_frequency = a4_frequency
+        """Set the A4 reference frequency. Safe to call from any thread."""
+        with self.__lock:
+            self.__a4_frequency = a4_frequency
