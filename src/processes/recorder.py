@@ -4,6 +4,7 @@ import numpy as np
 
 try:
     import sounddevice as soundd
+
     _SOUNDDEVICE_AVAILABLE = True
 except OSError:
     soundd = None
@@ -69,7 +70,7 @@ class Recorder(Process):
             raise RuntimeError(
                 'Recorder requires PortAudio. '
                 'Install it with: sudo apt-get install libportaudio2'
-        )
+            )
 
         with self.__lock:
             self.__record_step()

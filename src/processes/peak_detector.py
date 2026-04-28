@@ -2,9 +2,9 @@ import threading
 
 import numpy as np
 
+from detected_peaks import DetectedPeaks
 from interfaces.process import Process
 from spectrum import Spectrum
-from detected_peaks import DetectedPeaks
 
 DEFAULT_TARGET_Z_SCORE = 3
 

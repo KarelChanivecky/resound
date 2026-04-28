@@ -1,7 +1,7 @@
 import unittest
 
-from pipeline.consumer_producer import ConsumerProducer
 from interfaces.process import Process
+from pipeline.consumer_producer import ConsumerProducer
 
 
 class _Double(Process):

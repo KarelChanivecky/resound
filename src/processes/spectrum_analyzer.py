@@ -3,8 +3,8 @@ import threading
 import numpy as np
 
 from interfaces.process import Process
-from windowed_sample import WindowedSample
 from spectrum import Spectrum
+from windowed_sample import WindowedSample
 
 
 class SpectrumAnalyzer(Process):

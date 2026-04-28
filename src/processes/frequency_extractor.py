@@ -20,10 +20,10 @@ Bibliography:
 import scipy.signal.windows as scipy_win
 
 from interfaces.process import Process
-from processes.windower import Windower, DEFAULT_FFT_SIZE
-from processes.spectrum_analyzer import SpectrumAnalyzer
-from processes.peak_detector import PeakDetector, DEFAULT_TARGET_Z_SCORE
 from processes.frequency_interpolator import FrequencyInterpolator
+from processes.peak_detector import PeakDetector, DEFAULT_TARGET_Z_SCORE
+from processes.spectrum_analyzer import SpectrumAnalyzer
+from processes.windower import Windower, DEFAULT_FFT_SIZE
 
 
 class FrequencyExtractor(Process):

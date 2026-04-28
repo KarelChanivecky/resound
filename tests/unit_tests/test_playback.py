@@ -1,5 +1,6 @@
 import unittest
 from unittest.mock import patch, MagicMock
+
 import numpy as np
 
 from processes.playback import Playback, _SOUNDDEVICE_AVAILABLE
@@ -8,7 +9,7 @@ from sound_sample import SoundSample
 
 def _make_sample(sample_rate=5000, n_samples=100):
     samples = (np.random.default_rng(0).integers(
-        -2**31, 2**31, size=n_samples, dtype=np.int32))
+        -2 ** 31, 2 ** 31, size=n_samples, dtype=np.int32))
     return SoundSample(sample_rate, n_samples / sample_rate, samples)
 
 

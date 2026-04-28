@@ -1,8 +1,8 @@
 from pipeline.threaded_consumer import ThreadedConsumer
 from pipeline.threaded_consumer_producer import ThreadedConsumerProducer
 from pipeline.threaded_producer import ThreadedProducer
-from processes.frequency_extractor import FrequencyExtractor
 from processes.console_printer import ConsolePrinter
+from processes.frequency_extractor import FrequencyExtractor
 from processes.recorder import Recorder
 
 

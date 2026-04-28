@@ -3,6 +3,7 @@ import threading
 
 import scipy.signal.windows as scipy_win
 
+from note_spec import parse_note_specs
 from pipeline.consumer_producer import ConsumerProducer
 from pipeline.threaded_consumer import ThreadedConsumer
 from pipeline.threaded_consumer_producer import ThreadedConsumerProducer
@@ -18,13 +19,14 @@ from processes.recorder import Recorder
 from processes.spectrum_analyzer import SpectrumAnalyzer
 from processes.synthesizer import Synthesizer
 from processes.windower import Windower
-from note_spec import parse_note_specs
+
 
 # GUI imports are deferred to avoid pulling in matplotlib when --gui is not used.
 def _import_gui():
     from gui.resound_gui import ResoundGUI
     from processes.gui_process import PeaksGUIProcess, NoteGUIProcess
     return ResoundGUI, PeaksGUIProcess, NoteGUIProcess
+
 
 _WINDOWS_WITH_NO_PARAMS = {'hann', 'hamming', 'blackman', 'blackmanharris', 'boxcar', 'flattop'}
 _WINDOWS_ALL = _WINDOWS_WITH_NO_PARAMS | {'kaiser', 'tukey'}
@@ -277,21 +279,21 @@ def main(_stop_event=None):
         )
 
         # Fan note output to both ConsolePrinter and the GUI note display.
-        note_gui       = ThreadedConsumer(2, NoteGUIProcess(gui))
-        note_sink      = ThreadedTConsumerProducer(4, console_printer, note_gui)
+        note_gui = ThreadedConsumer(2, NoteGUIProcess(gui))
+        note_sink = ThreadedTConsumerProducer(4, console_printer, note_gui)
         note_identifier = ThreadedConsumerProducer(10, note_sink, note_identifier_process)
 
         # Fan peak output to FrequencyInterpolator chain and the GUI spectrum display.
         freq_interpolator = ConsumerProducer(note_identifier, FrequencyInterpolator())
-        peaks_gui  = ThreadedConsumer(2, PeaksGUIProcess(gui))
+        peaks_gui = ThreadedConsumer(2, PeaksGUIProcess(gui))
         peaks_sink = ThreadedTConsumerProducer(4, freq_interpolator, peaks_gui)
-        peak_detector     = ConsumerProducer(peaks_sink, peak_detector_process)
+        peak_detector = ConsumerProducer(peaks_sink, peak_detector_process)
     else:
-        note_identifier   = ThreadedConsumerProducer(10, console_printer, note_identifier_process)
+        note_identifier = ThreadedConsumerProducer(10, console_printer, note_identifier_process)
         freq_interpolator = ConsumerProducer(note_identifier, FrequencyInterpolator())
-        peak_detector     = ConsumerProducer(freq_interpolator, peak_detector_process)
+        peak_detector = ConsumerProducer(freq_interpolator, peak_detector_process)
 
-    amplitude_exp     = ConsumerProducer(peak_detector, amplitude_exp_process)
+    amplitude_exp = ConsumerProducer(peak_detector, amplitude_exp_process)
     spectrum_analyzer = ConsumerProducer(amplitude_exp, spectrum_analyzer_process)
     windower = ThreadedConsumerProducer(
         10, spectrum_analyzer, windower_process)
@@ -305,7 +307,7 @@ def main(_stop_event=None):
 
     if args.gui:
         try:
-            gui.run()           # blocks in the matplotlib event loop
+            gui.run()  # blocks in the matplotlib event loop
         finally:
             record_producer.stop()
             if isinstance(source, Recorder):

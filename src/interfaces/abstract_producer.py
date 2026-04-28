@@ -7,6 +7,7 @@ class AbstractProducer(Runnable):
     """
     Interface for producer
     """
+
     def __init__(self, consumer: AbstractConsumer, process: Process):
         Runnable.__init__(self, process)
         self._consumer = consumer
@@ -19,4 +20,3 @@ class AbstractProducer(Runnable):
         if self._running:
             raise RuntimeError("Cannot change consumer while producing")
         self._consumer = consumer
-

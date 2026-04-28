@@ -9,14 +9,15 @@ Notes at semitone >= 3 (C and above) increment the octave by 1.
 """
 
 import unittest
+
 import numpy as np
 
 from note_spec import parse_note_specs
-from processes.synthesizer import Synthesizer
 from processes.frequency_extractor import FrequencyExtractor
 from processes.note_identifier import NoteIdentifier
+from processes.synthesizer import Synthesizer
 
-_SAMPLE_RATE = 5000     # Hz; Nyquist covers up to 2500 Hz (octaves 3–7 for most notes)
+_SAMPLE_RATE = 5000  # Hz; Nyquist covers up to 2500 Hz (octaves 3–7 for most notes)
 _SAMPLE_DURATION = 1.0  # seconds; gives 5000 samples >> default fft_size=2048
 
 
@@ -40,8 +41,8 @@ class TestSynthesizerToNoteIdentifier(unittest.TestCase):
     # 1. Single note, no noise                                             #
     # ------------------------------------------------------------------ #
     def test_single_note_no_noise(self):
-        note = _chain('A45')   # A4, intensity 5
-        self.assertEqual(note.get_semitone(), 0)   # A
+        note = _chain('A45')  # A4, intensity 5
+        self.assertEqual(note.get_semitone(), 0)  # A
         self.assertEqual(note.get_octave(), 4)
 
     # ------------------------------------------------------------------ #
@@ -63,7 +64,7 @@ class TestSynthesizerToNoteIdentifier(unittest.TestCase):
     def test_three_notes_one_prominent(self):
         # A3=220 Hz (intensity 9), B3=246 Hz (1), C4=261 Hz (1)
         note = _chain('A39,B31,C41')
-        self.assertEqual(note.get_semitone(), 0)   # A
+        self.assertEqual(note.get_semitone(), 0)  # A
         self.assertEqual(note.get_octave(), 3)
 
     # ------------------------------------------------------------------ #
@@ -75,7 +76,7 @@ class TestSynthesizerToNoteIdentifier(unittest.TestCase):
     def test_three_notes_target_less_prominent(self):
         # A3=220 Hz (intensity 3), B3=246 Hz (5), C4=261 Hz (5)
         note = _chain('A33,B35,C45')
-        self.assertEqual(note.get_semitone(), 0)   # A
+        self.assertEqual(note.get_semitone(), 0)  # A
         self.assertEqual(note.get_octave(), 3)
 
     # ------------------------------------------------------------------ #
@@ -89,7 +90,7 @@ class TestSynthesizerToNoteIdentifier(unittest.TestCase):
         # A3 (220 Hz), A4 (440 Hz), A5 (880 Hz) at intensity 5
         # Two A4 variants detuned 5.6 and 11.1 cents sharp at intensity 3
         note = _chain('A35,A45,A55,A43:3,A43:5', snr=20, seed=0)
-        self.assertEqual(note.get_semitone(), 0)   # A
+        self.assertEqual(note.get_semitone(), 0)  # A
         self.assertEqual(note.get_octave(), 3)
 
 

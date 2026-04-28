@@ -16,10 +16,10 @@ from main import (
     _build_gui_controls,
     _fft_size_for_max_analyzed_frequency,
 )
-from processes.recorder import Recorder
-from processes.synthesizer import Synthesizer
 from processes.frequency_extractor import FrequencyExtractor
 from processes.note_identifier import NoteIdentifier
+from processes.recorder import Recorder
+from processes.synthesizer import Synthesizer
 
 
 class TestParseArgs(unittest.TestCase):
@@ -95,7 +95,6 @@ class TestBuildAudioSource(unittest.TestCase):
 
 
 class TestBuildGUIControls(unittest.TestCase):
-
     class _Gui:
         def __init__(self):
             self.fft_size = None
@@ -257,7 +256,7 @@ class TestCLIPipeline(unittest.TestCase):
 
     def test_synth_c4_identified(self):
         note = self._run(['--source', 'synth', '--notes', 'C45'])
-        self.assertEqual(note.get_semitone(), 3)   # C = 3 semitones above A
+        self.assertEqual(note.get_semitone(), 3)  # C = 3 semitones above A
         self.assertEqual(note.get_octave(), 4)
 
     def test_synth_larger_fft_size(self):
@@ -305,8 +304,7 @@ class TestMainBlocks(unittest.TestCase):
         stop_event = threading.Event()
 
         with patch.object(main_module, 'ThreadedProducer', _fake_threaded_producer), \
-             patch('sys.argv', ['resound', '--source', 'synth', '--notes', 'A45']):
-
+                patch('sys.argv', ['resound', '--source', 'synth', '--notes', 'A45']):
             main_thread = threading.Thread(
                 target=lambda: main_module.main(stop_event), daemon=True)
             main_thread.start()

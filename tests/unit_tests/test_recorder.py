@@ -12,7 +12,6 @@ _HARDWARE_AVAILABLE = bool(os.environ.get('HARDWARE_TESTS'))
 
 @unittest.skipUnless(_SOUNDDEVICE_AVAILABLE, 'sounddevice requires PortAudio (libportaudio2)')
 class TestRecorder(unittest.TestCase):
-
     class _FakeInputStream:
         def __init__(self, samplerate, channels, dtype, blocksize):
             self.samplerate = samplerate

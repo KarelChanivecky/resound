@@ -4,5 +4,5 @@ class DetectedPeaks:
         self.amplitudes = amplitudes
         self.peak_bins = peak_bins
         self.freq_resolution = freq_resolution
-        self.threshold = threshold          # computed z-score amplitude threshold
+        self.threshold = threshold  # computed z-score amplitude threshold
         self.windowed_sample = windowed_sample  # carries raw_samples and windowed samples

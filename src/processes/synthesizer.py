@@ -14,13 +14,13 @@ class Synthesizer(Process):
     """
 
     def __init__(
-        self,
-        notes: list[NoteSpec],
-        sample_rate: int,
-        sample_duration: float = 0.5,
-        snr: float = 0.0,
-        a4_frequency: float = 440.0,
-        seed: int | None = None,
+            self,
+            notes: list[NoteSpec],
+            sample_rate: int,
+            sample_duration: float = 0.5,
+            snr: float = 0.0,
+            a4_frequency: float = 440.0,
+            seed: int | None = None,
     ) -> None:
         self.__notes = notes
         self.__sample_rate = sample_rate

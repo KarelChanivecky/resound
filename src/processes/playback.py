@@ -2,6 +2,7 @@ import numpy as np
 
 try:
     import sounddevice as soundd
+
     _SOUNDDEVICE_AVAILABLE = True
 except OSError:
     soundd = None

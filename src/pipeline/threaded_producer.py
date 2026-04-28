@@ -8,6 +8,7 @@ class ThreadedProducer(AbstractProducer):
     """
     Models a threaded producer.
     """
+
     def __init__(self, consumer: AbstractConsumer, process):
         """
         Initializes a producer.

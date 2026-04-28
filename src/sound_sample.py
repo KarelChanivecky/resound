@@ -2,6 +2,7 @@ class SoundSample:
     """
     Models a sound sample.
     """
+
     def __init__(self, sample_rate, sample_duration, samples):
         """
         Construct an instance of SoundSample

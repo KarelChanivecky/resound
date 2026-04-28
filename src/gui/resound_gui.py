@@ -26,8 +26,9 @@ is stable and never needs a full redraw.
 import threading
 import traceback
 
-import numpy as np
 import matplotlib
+import numpy as np
+
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
@@ -47,41 +48,41 @@ class ResoundGUI:
     """
 
     # Colour palette
-    _BG              = '#1a1a2e'
-    _AX_BG           = '#16213e'
-    _CTRL_BG         = '#111120'
-    _INPUT_BG        = '#1e1e38'   # slightly lighter than sidebar — reads as editable
-    _NOTE_BG         = '#12122a'
-    _NOTE_EDGE       = '#5599ff'
-    _RAW_COLOR       = '#888888'
-    _WINDOWED_COLOR  = '#4fc3f7'
-    _SPECTRUM_COLOR  = '#4fc3f7'
+    _BG = '#1a1a2e'
+    _AX_BG = '#16213e'
+    _CTRL_BG = '#111120'
+    _INPUT_BG = '#1e1e38'  # slightly lighter than sidebar — reads as editable
+    _NOTE_BG = '#12122a'
+    _NOTE_EDGE = '#5599ff'
+    _RAW_COLOR = '#888888'
+    _WINDOWED_COLOR = '#4fc3f7'
+    _SPECTRUM_COLOR = '#4fc3f7'
     _THRESHOLD_COLOR = '#ffa726'
-    _NOISE_ALPHA     = 0.12
-    _PEAK_COLOR      = '#ef5350'
-    _GRID_COLOR      = '#2a2a4a'
+    _NOISE_ALPHA = 0.12
+    _PEAK_COLOR = '#ef5350'
+    _GRID_COLOR = '#2a2a4a'
     _SEPARATOR_COLOR = '#3a3a6a'
-    _TEXT_COLOR      = '#e0e0e0'
-    _NOTE_COLOR      = '#ffffff'
-    _ACCENT_COLOR    = '#4fc3f7'
-    _BTN_COLOR       = '#1e1e3a'
-    _BTN_HOVER       = '#2a2a5a'
-    _ERROR_BORDER    = '#cc3333'
-    _INPUT_DELAY_MS  = 500
+    _TEXT_COLOR = '#e0e0e0'
+    _NOTE_COLOR = '#ffffff'
+    _ACCENT_COLOR = '#4fc3f7'
+    _BTN_COLOR = '#1e1e3a'
+    _BTN_HOVER = '#2a2a5a'
+    _ERROR_BORDER = '#cc3333'
+    _INPUT_DELAY_MS = 500
 
     def __init__(self, fft_size: int = 2048, sample_rate: int = 2500,
                  controls=None, control_values=None):
-        self._fft_size   = fft_size
-        self._nyquist    = sample_rate / 2
+        self._fft_size = fft_size
+        self._nyquist = sample_rate / 2
         self._controls = controls or {}
         self._control_values = control_values or {}
         self._control_widgets = []
         self._control_timers = {}
         self._dropdowns = []
-        self._text_boxes = {}   # callback_name -> (TextBox, ax)
+        self._text_boxes = {}  # callback_name -> (TextBox, ax)
         self._value_labels = {}
         self._latest_peaks = None
-        self._latest_note  = None
+        self._latest_note = None
         self._lock = threading.Lock()
         self._setup_figure()
 
@@ -131,10 +132,12 @@ class ResoundGUI:
         # another already holds the mouse grab.  Replace grab_mouse with a version
         # that silently releases the previous grabber first.
         canvas = self._fig.canvas
+
         def _safe_grab(ax):
             if canvas.mouse_grabber not in (None, ax):
                 canvas.release_mouse(canvas.mouse_grabber)
             canvas.mouse_grabber = ax
+
         canvas.grab_mouse = _safe_grab
 
     # ------------------------------------------------------------------ #
@@ -412,8 +415,8 @@ class ResoundGUI:
 
     def _set_window_parameter_visibility(self, window_name):
         for name, visible in (
-            ('beta', window_name == 'kaiser'),
-            ('alpha', window_name == 'tukey'),
+                ('beta', window_name == 'kaiser'),
+                ('alpha', window_name == 'tukey'),
         ):
             item = self._text_boxes.get(name)
             if item is not None:
@@ -598,7 +601,7 @@ class ResoundGUI:
 
     def _init_anim(self):
         self._clear_signal_artists()
-        self._note_text.set_text('?')
+        self._note_text.set_text('—')
         return self._animated_artists
 
     def _clear_signal_artists(self):
@@ -619,7 +622,7 @@ class ResoundGUI:
         try:
             with self._lock:
                 peaks = self._latest_peaks
-                note  = self._latest_note
+                note = self._latest_note
 
             if peaks is not None:
                 self._draw_time_domain(peaks)
@@ -656,9 +659,9 @@ class ResoundGUI:
         self._line_windowed.set_data(x, wind_norm)
 
     def _draw_spectrum(self, peaks):
-        amps     = peaks.amplitudes
+        amps = peaks.amplitudes
         freq_res = peaks.freq_resolution
-        freqs    = np.arange(len(amps)) * freq_res
+        freqs = np.arange(len(amps)) * freq_res
 
         amp_max = float(amps.max())
         amps_norm = amps / amp_max if amp_max > 0 else amps

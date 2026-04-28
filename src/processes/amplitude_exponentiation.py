@@ -38,9 +38,9 @@ def _iterated_exp(amplitudes: np.ndarray, exponent: float) -> np.ndarray:
     while remaining > 1e-12:
         peak = float(result.max())
         if peak > 0.0:
-            result = result / peak          # normalise to [0, 1]
+            result = result / peak  # normalise to [0, 1]
         step = min(remaining, _MAX_STEP)
-        result = result ** step             # safe: input in [0, 1], output in [0, 1]
+        result = result ** step  # safe: input in [0, 1], output in [0, 1]
         remaining -= step
 
     # Restore the original amplitude scale so downstream z-score thresholding

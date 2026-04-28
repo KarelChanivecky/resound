@@ -50,7 +50,3 @@ class MusicalNote:
         delta_cents = round(self._delta * 100)
         sign = '+' if delta_cents >= 0 else ''
         return f'{self.get_name()} ({sign}{delta_cents} cents)'
-
-
-
-

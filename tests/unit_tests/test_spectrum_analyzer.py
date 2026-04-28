@@ -2,8 +2,8 @@ import unittest
 
 import numpy as np
 
-from processes.windower import Windower
 from processes.spectrum_analyzer import SpectrumAnalyzer
+from processes.windower import Windower
 from sound_sample import SoundSample
 from spectrum import Spectrum
 

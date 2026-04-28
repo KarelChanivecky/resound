@@ -8,7 +8,7 @@ _SEMITONES_FROM_C = {
 }
 
 _DETUNE_MAX_CENTS = 25.0
-_DETUNE_RANGE = 9.0      # denominator: (10 - 1)
+_DETUNE_RANGE = 9.0  # denominator: (10 - 1)
 
 # Octave and intensity each range 1-10.  "10" must be tried before "[1-9]" so the
 # regex engine matches the two-digit value greedily where present (e.g. "10" in
@@ -19,10 +19,10 @@ _PATTERN = re.compile(rf'([A-G]#?){_FIELD}{_FIELD}(?::{_FIELD})?')
 
 @dataclass(frozen=True)
 class NoteSpec:
-    note: str       # letter(s): 'A' … 'G', optionally followed by '#'
-    octave: int     # 1–10
+    note: str  # letter(s): 'A' … 'G', optionally followed by '#'
+    octave: int  # 1–10
     intensity: int  # 1–10; maps linearly to amplitude 0.1 … 1.0
-    detune: int     # 1–10; 1 = on-pitch, 10 = +25 cents sharp
+    detune: int  # 1–10; 1 = on-pitch, 10 = +25 cents sharp
 
 
 def parse_note_specs(s: str) -> list[NoteSpec]:
