@@ -84,7 +84,9 @@ class TestRecorder(unittest.TestCase):
             result = Recorder(target_frequency_max=10, sample_duration=0.25, fft_size=12).get_sample()
 
         self.assertEqual(result.get_sample_duration(), 0.6)
-        np.testing.assert_array_equal(result.get_samples(), np.arange(3, 15))
+        np.testing.assert_array_equal(result.get_samples(),
+                                      np.array([0, 0, 0, 0, 0, 0, 0,
+                                                0, 1, 2, 3, 4]))
 
     def test_sample_duration_sets_window_when_larger_than_fft_size(self):
         input_stream_patch, _streams = self._patch_input_stream()
@@ -101,7 +103,9 @@ class TestRecorder(unittest.TestCase):
             recorder.get_sample()
             result = recorder.get_sample()
 
-        np.testing.assert_array_equal(result.get_samples(), np.arange(8, 20))
+        np.testing.assert_array_equal(result.get_samples(),
+                                      np.array([0, 0, 0, 1, 2, 3,
+                                                4, 5, 6, 7, 8, 9]))
 
     def test_get_sample_slides_window_when_step_does_not_divide_fft_size(self):
         input_stream_patch, _streams = self._patch_input_stream()
@@ -110,7 +114,9 @@ class TestRecorder(unittest.TestCase):
             recorder.get_sample()
             result = recorder.get_sample()
 
-        np.testing.assert_array_equal(result.get_samples(), np.arange(72, 200))
+        expected = np.concatenate([np.zeros(28, dtype=np.int32),
+                                   np.arange(100, dtype=np.int32)])
+        np.testing.assert_array_equal(result.get_samples(), expected)
 
     def test_returned_sample_is_not_mutated_by_next_run(self):
         input_stream_patch, _streams = self._patch_input_stream()
@@ -120,7 +126,9 @@ class TestRecorder(unittest.TestCase):
             first_samples = first.get_samples()
             recorder.get_sample()
 
-        np.testing.assert_array_equal(first_samples, np.arange(3, 15))
+        np.testing.assert_array_equal(first_samples,
+                                      np.array([0, 0, 0, 0, 0, 0, 0,
+                                                0, 1, 2, 3, 4]))
 
     def test_get_sample_reuses_recording_buffer(self):
         input_stream_patch, streams = self._patch_input_stream()

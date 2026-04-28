@@ -66,6 +66,7 @@ class ResoundGUI:
     _ACCENT_COLOR    = '#4fc3f7'
     _BTN_COLOR       = '#1e1e3a'
     _BTN_HOVER       = '#2a2a5a'
+    _ERROR_BORDER    = '#cc3333'
     _INPUT_DELAY_MS  = 500
 
     def __init__(self, fft_size: int = 2048, sample_rate: int = 2500,
@@ -77,6 +78,8 @@ class ResoundGUI:
         self._control_widgets = []
         self._control_timers = {}
         self._dropdowns = []
+        self._text_boxes = {}   # callback_name -> (TextBox, ax)
+        self._value_labels = {}
         self._latest_peaks = None
         self._latest_note  = None
         self._lock = threading.Lock()
@@ -102,6 +105,14 @@ class ResoundGUI:
     def set_sample_rate(self, sample_rate: int) -> None:
         self._nyquist = sample_rate / 2
         self._ax_freq.set_xlim(0, self._nyquist)
+        self._fig.canvas.draw_idle()
+
+    def set_analysis_range(self, max_frequency: int, fft_size: int) -> None:
+        self._nyquist = max_frequency
+        self._fft_size = fft_size
+        self._ax_freq.set_xlim(0, self._nyquist)
+        self._ax_time.set_xlim(0, fft_size - 1)
+        self._set_value_label('fft_size', str(fft_size))
         self._fig.canvas.draw_idle()
 
     def set_controls(self, controls) -> None:
@@ -258,11 +269,8 @@ class ResoundGUI:
             animated=True)
 
     def _setup_controls_panel(self, spec):
-        # 15 rows: 3 section-header axes + 9 control axes + 1 pause/play + 1 spacer
-        # Layout: [0]=Signal header, [1..6]=Signal controls, [7]=Tuning header,
-        #         [8]=A4, [9]=Source header, [10..11]=Max Hz / Step s,
-        #         [12]=spacer, [13]=pause/play, [14]=spacer
-        n_rows = 15
+        # Layout: signal controls, tuning controls, source controls, actions.
+        n_rows = 16
         control_grid = GridSpecFromSubplotSpec(
             n_rows, 1, subplot_spec=spec, hspace=0.7)
         axes = [self._fig.add_subplot(control_grid[i, 0]) for i in range(n_rows)]
@@ -289,50 +297,56 @@ class ResoundGUI:
         # ── Signal ──────────────────────────────────────────────────────────
         make_header(axes[0], '─── Signal ───')
 
-        self._make_text_box(axes[1], 'FFT',
-                            str(values.get('fft_size', self._fft_size)),
-                            int, 'fft_size')
+        self._make_text_box(axes[1], 'Max Analyzed Hz',
+                            str(values.get('max_analyzed_frequency',
+                                           int(self._nyquist))),
+                            int, 'max_analyzed_frequency',
+                            validator=lambda n: n > 0)
+        self._make_value_label(axes[2], 'FFT Samples',
+                               str(values.get('fft_size', self._fft_size)),
+                               'fft_size')
         self._make_dropdown(
-            axes[2], 'Window',
+            axes[3], 'Window',
             ('hann', 'hamming', 'blackman', 'blackmanharris',
              'boxcar', 'flattop', 'kaiser', 'tukey'),
             values.get('window', 'hann'), 'window')
-        self._make_text_box(axes[3], 'Beta', str(values.get('beta', 5.0)),
-                            float, 'beta')
-        self._make_text_box(axes[4], 'Alpha', str(values.get('alpha', 0.5)),
-                            float, 'alpha')
-        self._make_text_box(axes[5], 'Z', str(values.get('zscore', 3.0)),
-                            float, 'zscore')
+        self._make_text_box(axes[4], 'Beta', str(values.get('beta', 5.0)),
+                            float, 'beta',
+                            validator=lambda x: x >= 0.0)
+        self._make_text_box(axes[5], 'Alpha', str(values.get('alpha', 0.5)),
+                            float, 'alpha',
+                            validator=lambda x: 0.0 <= x <= 1.0)
+        self._make_text_box(axes[6], 'Z', str(values.get('zscore', 3.0)),
+                            float, 'zscore',
+                            validator=lambda x: x > 0.0)
         self._make_dropdown(
-            axes[6], 'Norm', ('backward', 'ortho', 'forward'),
+            axes[7], 'Norm', ('backward', 'ortho', 'forward'),
             values.get('fft_norm', 'backward'), 'fft_norm')
+        self._make_text_box(axes[8], 'Amp Exp',
+                            str(values.get('amp_exp', 1.0)),
+                            float, 'amp_exp',
+                            validator=lambda x: x >= 0.0)
 
         # ── Tuning ──────────────────────────────────────────────────────────
-        make_header(axes[7], '─── Tuning ───')
+        make_header(axes[9], '─── Tuning ───')
 
-        self._make_text_box(axes[8], 'A4',
+        self._make_text_box(axes[10], 'A4',
                             str(values.get('a4_frequency', 440.0)),
-                            float, 'a4_frequency')
+                            float, 'a4_frequency',
+                            validator=lambda x: 20.0 <= x <= 20000.0)
 
         # ── Source ──────────────────────────────────────────────────────────
-        make_header(axes[9], '─── Source ───')
+        make_header(axes[11], '─── Source ───')
 
-        self._make_text_box(axes[10], 'Max Hz',
-                            str(values.get('recorder_target_frequency_max',
-                                           int(self._nyquist))),
-                            int, 'recorder_target_frequency_max')
-        self._make_text_box(axes[11], 'Step s',
+        self._make_text_box(axes[12], 'Step s',
                             str(values.get('recorder_sample_duration', 0.05)),
-                            float, 'recorder_sample_duration')
-
-        self._make_text_box(axes[12], 'Amp Exp',
-                            str(values.get('amp_exp', 1.0)),
-                            float, 'amp_exp')
+                            float, 'recorder_sample_duration',
+                            validator=lambda x: x > 0.0)
 
         # ── Pause / Play ────────────────────────────────────────────────────
         self._paused = False
         self._pause_btn = Button(
-            axes[13], '⏸ Pause',
+            axes[14], 'Pause',
             color=self._BTN_COLOR,
             hovercolor=self._BTN_HOVER,
         )
@@ -341,7 +355,16 @@ class ResoundGUI:
         self._pause_btn.on_clicked(self._toggle_pause)
         self._control_widgets.append(self._pause_btn)
 
-        axes[14].axis('off')
+        self._reset_btn = Button(
+            axes[15], 'Reset',
+            color=self._BTN_COLOR,
+            hovercolor=self._BTN_HOVER,
+        )
+        self._reset_btn.label.set_color(self._TEXT_COLOR)
+        self._reset_btn.label.set_fontsize(8)
+        self._reset_btn.on_clicked(self._reset_controls)
+        self._control_widgets.append(self._reset_btn)
+        self._set_window_parameter_visibility(values.get('window', 'hann'))
 
     def _toggle_pause(self, _event):
         if self._paused:
@@ -354,7 +377,51 @@ class ResoundGUI:
             self._paused = True
         self._fig.canvas.draw_idle()
 
-    def _make_text_box(self, ax, label, initial, parser, callback_name):
+    def _reset_controls(self, _event):
+        values = self._control_values
+        for name, (tb, ax) in self._text_boxes.items():
+            default = values.get(name)
+            if default is not None:
+                self._set_input_valid(ax, True)
+                tb.set_val(str(default))
+        for dropdown in self._dropdowns:
+            name = dropdown['callback_name']
+            default = values.get(name)
+            if default is not None:
+                dropdown['main'].label.set_text(f'{default} v')
+                self._run_control(name, default)
+        self._fig.canvas.draw_idle()
+
+    def _make_value_label(self, ax, label, initial, name):
+        ax.set_title(label, color=self._TEXT_COLOR, fontsize=7,
+                     pad=2, loc='left')
+        text = ax.text(
+            0.04, 0.45, initial,
+            transform=ax.transAxes,
+            ha='left', va='center',
+            color=self._TEXT_COLOR,
+            fontsize=9,
+            fontfamily='monospace',
+        )
+        self._value_labels[name] = text
+
+    def _set_value_label(self, name, value):
+        text = self._value_labels.get(name)
+        if text is not None:
+            text.set_text(value)
+
+    def _set_window_parameter_visibility(self, window_name):
+        for name, visible in (
+            ('beta', window_name == 'kaiser'),
+            ('alpha', window_name == 'tukey'),
+        ):
+            item = self._text_boxes.get(name)
+            if item is not None:
+                _text_box, ax = item
+                ax.set_visible(visible)
+
+    def _make_text_box(self, ax, label, initial, parser, callback_name,
+                       validator=None):
         # Label above the field; empty TextBox label frees the full width for input.
         ax.set_title(label, color=self._TEXT_COLOR, fontsize=7,
                      pad=2, loc='left')
@@ -370,10 +437,13 @@ class ResoundGUI:
         # Make the text cursor visible against the dark background.
         text_box.cursor.set_color(self._TEXT_COLOR)
         text_box.on_submit(
-            lambda value: self._submit_control(callback_name, parser, value))
+            lambda value: self._submit_control(callback_name, parser, value,
+                                               ax, validator))
         text_box.on_text_change(
-            lambda value: self._schedule_control(callback_name, parser, value))
+            lambda value: self._schedule_control(callback_name, parser, value,
+                                                 ax, validator))
         self._control_widgets.append(text_box)
+        self._text_boxes[callback_name] = (text_box, ax)
 
     def _make_dropdown(self, ax, label, options, initial, callback_name):
         ax.set_title(label, color=self._TEXT_COLOR, fontsize=8, pad=2)
@@ -458,36 +528,69 @@ class ResoundGUI:
         self._run_control(callback_name, value)
         self._fig.canvas.draw_idle()
 
-    def _submit_control(self, callback_name, parser, value):
+    def _submit_control(self, callback_name, parser, value, ax=None,
+                        validator=None):
         timer = self._control_timers.pop(callback_name, None)
         if timer is not None:
             timer.stop()
         try:
             parsed = parser(value)
-        except ValueError:
+        except (ValueError, TypeError):
+            if ax is not None:
+                self._set_input_valid(ax, False)
             return
+        if validator is not None and not validator(parsed):
+            if ax is not None:
+                self._set_input_valid(ax, False)
+            return
+        if ax is not None:
+            self._set_input_valid(ax, True)
         self._run_control(callback_name, parsed)
 
-    def _schedule_control(self, callback_name, parser, value):
+    def _schedule_control(self, callback_name, parser, value, ax=None,
+                          validator=None):
         timer = self._control_timers.get(callback_name)
         if timer is not None:
             timer.stop()
+
+        # Give immediate visual feedback before the debounce delay fires.
+        try:
+            parsed = parser(value)
+            valid = validator is None or validator(parsed)
+        except (ValueError, TypeError):
+            valid = False
+
+        if ax is not None:
+            self._set_input_valid(ax, valid)
+
+        if not valid:
+            self._control_timers.pop(callback_name, None)
+            return
 
         timer = self._fig.canvas.new_timer(interval=self._INPUT_DELAY_MS)
 
         def apply_value():
             self._control_timers.pop(callback_name, None)
-            self._submit_control(callback_name, parser, value)
+            self._submit_control(callback_name, parser, value, ax, validator)
             return False
 
         timer.add_callback(apply_value)
         self._control_timers[callback_name] = timer
         timer.start()
 
+    def _set_input_valid(self, ax, valid: bool) -> None:
+        edge_color = self._GRID_COLOR if valid else self._ERROR_BORDER
+        for spine in ax.spines.values():
+            spine.set_edgecolor(edge_color)
+        self._fig.canvas.draw_idle()
+
     def _run_control(self, callback_name, value):
         callback = self._controls.get(callback_name)
         if callback is not None:
             callback(value)
+        if callback_name == 'window':
+            self._set_window_parameter_visibility(value)
+            self._fig.canvas.draw_idle()
 
     # ------------------------------------------------------------------ #
     # Animation callbacks                                                  #

@@ -30,8 +30,8 @@ _WINDOWS_WITH_NO_PARAMS = {'hann', 'hamming', 'blackman', 'blackmanharris', 'box
 _WINDOWS_ALL = _WINDOWS_WITH_NO_PARAMS | {'kaiser', 'tukey'}
 
 # Recorder defaults use a short blocking step and an FFT-sized sliding window.
-_RECORDER_TARGET_FREQUENCY_MAX = 2500
-_RECORDER_SAMPLE_RATE = _RECORDER_TARGET_FREQUENCY_MAX * 2
+_DEFAULT_MAX_ANALYZED_FREQUENCY = 2500
+_RECORDER_SAMPLE_RATE = _DEFAULT_MAX_ANALYZED_FREQUENCY * 2
 _RECORDER_SAMPLE_DURATION = 0.05
 _SYNTH_SAMPLE_RATE = 5000
 _SYNTH_SAMPLE_DURATION = 0.5
@@ -120,6 +120,11 @@ def _make_window(window_name, fft_size, beta, alpha):
     return scipy_win.get_window(window_spec, fft_size, fftbins=True)
 
 
+def _fft_size_for_max_analyzed_frequency(max_frequency, reference_fft_size,
+                                         reference_max_frequency=_DEFAULT_MAX_ANALYZED_FREQUENCY):
+    return max(64, int(round(reference_fft_size * max_frequency / reference_max_frequency)))
+
+
 def _build_window(args):
     return _make_window(args.window, args.fft_size, args.beta, args.alpha)
 
@@ -131,13 +136,15 @@ def _build_audio_source(args):
         min_duration = args.fft_size / _SYNTH_SAMPLE_RATE
         sample_duration = max(_SYNTH_SAMPLE_DURATION, min_duration)
         return Synthesizer(notes, _SYNTH_SAMPLE_RATE, sample_duration, snr=args.snr)
-    return Recorder(_RECORDER_TARGET_FREQUENCY_MAX, _RECORDER_SAMPLE_DURATION, args.fft_size)
+    return Recorder(_DEFAULT_MAX_ANALYZED_FREQUENCY, _RECORDER_SAMPLE_DURATION, args.fft_size)
 
 
 def _build_gui_controls(args, source, gui, windower, peak_detector,
                         spectrum_analyzer, note_identifier, amplitude_exp_process):
     state = {
         'fft_size': args.fft_size,
+        'reference_fft_size': args.fft_size,
+        'max_analyzed_frequency': _DEFAULT_MAX_ANALYZED_FREQUENCY,
         'window': args.window,
         'beta': args.beta,
         'alpha': args.alpha,
@@ -152,15 +159,29 @@ def _build_gui_controls(args, source, gui, windower, peak_detector,
         )
         windower.set_window(window)
 
-    def set_fft_size(value):
-        fft_size = int(value)
-        if fft_size <= 0:
-            return
-        state['fft_size'] = fft_size
+    def _set_fft_size(fft_size):
+        state['fft_size'] = int(fft_size)
         _set_window()
         if hasattr(source, 'set_fft_size'):
-            source.set_fft_size(fft_size)
-        gui.set_fft_size(fft_size)
+            source.set_fft_size(state['fft_size'])
+        if hasattr(gui, 'set_analysis_range'):
+            gui.set_analysis_range(state['max_analyzed_frequency'], state['fft_size'])
+        else:
+            gui.set_sample_rate(state['max_analyzed_frequency'] * 2)
+            gui.set_fft_size(state['fft_size'])
+
+    def set_max_analyzed_frequency(value):
+        max_frequency = int(value)
+        if max_frequency <= 0:
+            return
+        state['max_analyzed_frequency'] = max_frequency
+        if hasattr(source, 'set_target_frequency_max'):
+            source.set_target_frequency_max(max_frequency)
+        fft_size = _fft_size_for_max_analyzed_frequency(
+            max_frequency,
+            state['reference_fft_size'],
+        )
+        _set_fft_size(fft_size)
 
     def set_window(value):
         state['window'] = value
@@ -187,13 +208,6 @@ def _build_gui_controls(args, source, gui, windower, peak_detector,
         if a4_frequency > 0:
             note_identifier.set_a4_frequency(a4_frequency)
 
-    def set_recorder_target_frequency_max(value):
-        target_frequency_max = int(value)
-        if target_frequency_max <= 0 or not hasattr(source, 'set_target_frequency_max'):
-            return
-        source.set_target_frequency_max(target_frequency_max)
-        gui.set_sample_rate(target_frequency_max * 2)
-
     def set_recorder_sample_duration(value):
         sample_duration = float(value)
         if sample_duration > 0 and hasattr(source, 'set_sample_duration'):
@@ -205,14 +219,13 @@ def _build_gui_controls(args, source, gui, windower, peak_detector,
             amplitude_exp_process.set_exponent(exp)
 
     return {
-        'fft_size': set_fft_size,
+        'max_analyzed_frequency': set_max_analyzed_frequency,
         'window': set_window,
         'beta': set_beta,
         'alpha': set_alpha,
         'zscore': set_zscore,
         'fft_norm': set_fft_norm,
         'a4_frequency': set_a4_frequency,
-        'recorder_target_frequency_max': set_recorder_target_frequency_max,
         'recorder_sample_duration': set_recorder_sample_duration,
         'amp_exp': set_amp_exp,
     }
@@ -245,7 +258,7 @@ def main(_stop_event=None):
                 'zscore': args.zscore,
                 'fft_norm': args.fft_norm,
                 'a4_frequency': 440.0,
-                'recorder_target_frequency_max': _RECORDER_TARGET_FREQUENCY_MAX,
+                'max_analyzed_frequency': _DEFAULT_MAX_ANALYZED_FREQUENCY,
                 'recorder_sample_duration': _RECORDER_SAMPLE_DURATION,
                 'amp_exp': args.amp_exp,
             },

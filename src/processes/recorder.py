@@ -69,14 +69,10 @@ class Recorder(Process):
             raise RuntimeError(
                 'Recorder requires PortAudio. '
                 'Install it with: sudo apt-get install libportaudio2'
-            )
+        )
 
         with self.__lock:
-            if not self.__ring.is_full():
-                while not self.__ring.is_full():
-                    self.__record_step()
-            else:
-                self.__record_step()
+            self.__record_step()
 
             samples = self.__ring.snapshot()
             sample_duration = len(samples) / self.__sample_rate

@@ -10,7 +10,13 @@ import time
 import unittest
 from unittest.mock import patch
 
-from main import _parse_args, _build_audio_source, _build_gui_controls, main
+from main import (
+    _parse_args,
+    _build_audio_source,
+    _build_gui_controls,
+    _fft_size_for_max_analyzed_frequency,
+    main,
+)
 from processes.recorder import Recorder
 from processes.synthesizer import Synthesizer
 from processes.frequency_extractor import FrequencyExtractor
@@ -95,12 +101,16 @@ class TestBuildGUIControls(unittest.TestCase):
         def __init__(self):
             self.fft_size = None
             self.sample_rate = None
+            self.analysis_range = None
 
         def set_fft_size(self, fft_size):
             self.fft_size = fft_size
 
         def set_sample_rate(self, sample_rate):
             self.sample_rate = sample_rate
+
+        def set_analysis_range(self, max_frequency, fft_size):
+            self.analysis_range = (max_frequency, fft_size)
 
     class _SetterRecorder:
         def __init__(self):
@@ -174,14 +184,16 @@ class TestBuildGUIControls(unittest.TestCase):
         )
         return controls, source, gui, windower, peak_detector, spectrum_analyzer, note_identifier, amplitude_exp
 
-    def test_fft_size_updates_recorder_windower_and_gui(self):
+    def test_max_analyzed_frequency_updates_recorder_windower_and_gui(self):
         controls, source, gui, windower, *_ = self._controls()
+        expected_fft_size = _fft_size_for_max_analyzed_frequency(3000, 2048)
 
-        controls['fft_size'](1024)
+        controls['max_analyzed_frequency'](3000)
 
-        self.assertEqual(source.fft_size, 1024)
-        self.assertEqual(gui.fft_size, 1024)
-        self.assertEqual(len(windower.window), 1024)
+        self.assertEqual(source.target_frequency_max, 3000)
+        self.assertEqual(source.fft_size, expected_fft_size)
+        self.assertEqual(gui.analysis_range, (3000, expected_fft_size))
+        self.assertEqual(len(windower.window), expected_fft_size)
 
     def test_window_shape_controls_update_windower(self):
         controls, _source, _gui, windower, *_ = self._controls()
@@ -213,14 +225,11 @@ class TestBuildGUIControls(unittest.TestCase):
         self.assertEqual(note_identifier.a4_frequency, 442.0)
 
     def test_recorder_controls_update_recorder_and_gui(self):
-        controls, source, gui, *_ = self._controls()
+        controls, source, _gui, *_ = self._controls()
 
-        controls['recorder_target_frequency_max'](3000)
         controls['recorder_sample_duration'](0.1)
 
-        self.assertEqual(source.target_frequency_max, 3000)
         self.assertEqual(source.sample_duration, 0.1)
-        self.assertEqual(gui.sample_rate, 6000)
 
 
 class TestCLIPipeline(unittest.TestCase):
