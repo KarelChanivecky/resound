@@ -53,6 +53,10 @@ class Windower(Process):
 
         samples = sound_sample.get_samples()
         cropped = samples[:fft_size]
+        # Pad with zeros if the ring buffer hasn't filled to the new fft_size yet
+        # (happens briefly after fft_size is changed at runtime).
+        if len(cropped) < fft_size:
+            cropped = np.pad(cropped, (0, fft_size - len(cropped)))
         raw = self.__raw_samples.copy_from(cropped.astype(np.float64, copy=False))
         normalized = _normalize_32b(cropped)
         windowed = self.__windowed_samples.ensure((fft_size,), np.float64)

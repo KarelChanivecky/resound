@@ -114,6 +114,17 @@ class ResoundGUI:
         """Start the matplotlib event loop. Blocks until the window is closed."""
         plt.show()
 
+    def _patch_mouse_grab(self) -> None:
+        # matplotlib raises RuntimeError when a second TextBox is clicked while
+        # another already holds the mouse grab.  Replace grab_mouse with a version
+        # that silently releases the previous grabber first.
+        canvas = self._fig.canvas
+        def _safe_grab(ax):
+            if canvas.mouse_grabber not in (None, ax):
+                canvas.release_mouse(canvas.mouse_grabber)
+            canvas.mouse_grabber = ax
+        canvas.grab_mouse = _safe_grab
+
     # ------------------------------------------------------------------ #
     # Figure setup                                                         #
     # ------------------------------------------------------------------ #
@@ -146,6 +157,7 @@ class ResoundGUI:
             solid_capstyle='butt',
         ))
 
+        self._patch_mouse_grab()
         self._setup_time_axis()
         self._setup_freq_axis()
         self._setup_note_axis()
