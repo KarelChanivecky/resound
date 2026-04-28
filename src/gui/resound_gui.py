@@ -50,6 +50,7 @@ class ResoundGUI:
     _BG              = '#1a1a2e'
     _AX_BG           = '#16213e'
     _CTRL_BG         = '#111120'
+    _INPUT_BG        = '#1e1e38'   # slightly lighter than sidebar — reads as editable
     _NOTE_BG         = '#12122a'
     _NOTE_EDGE       = '#5599ff'
     _RAW_COLOR       = '#888888'
@@ -354,14 +355,20 @@ class ResoundGUI:
         self._fig.canvas.draw_idle()
 
     def _make_text_box(self, ax, label, initial, parser, callback_name):
+        # Label above the field; empty TextBox label frees the full width for input.
+        ax.set_title(label, color=self._TEXT_COLOR, fontsize=7,
+                     pad=2, loc='left')
         text_box = TextBox(
-            ax, label, initial=initial,
-            color=self._CTRL_BG,
+            ax, label='',
+            initial=initial,
+            color=self._INPUT_BG,
             hovercolor=self._GRID_COLOR,
-            label_pad=0.02,
+            textalignment='left',
         )
-        text_box.label.set_color(self._TEXT_COLOR)
         text_box.text_disp.set_color(self._TEXT_COLOR)
+        text_box.text_disp.set_fontsize(9)
+        # Make the text cursor visible against the dark background.
+        text_box.cursor.set_color(self._TEXT_COLOR)
         text_box.on_submit(
             lambda value: self._submit_control(callback_name, parser, value))
         text_box.on_text_change(
