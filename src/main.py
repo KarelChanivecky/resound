@@ -28,7 +28,10 @@ def _import_gui():
 _WINDOWS_WITH_NO_PARAMS = {'hann', 'hamming', 'blackman', 'blackmanharris', 'boxcar', 'flattop'}
 _WINDOWS_ALL = _WINDOWS_WITH_NO_PARAMS | {'kaiser', 'tukey'}
 
-# Synthesizer defaults mirror the Recorder(2500, 0.5) settings used in recorder mode.
+# Recorder defaults use a short blocking step and an FFT-sized sliding window.
+_RECORDER_TARGET_FREQUENCY_MAX = 2500
+_RECORDER_SAMPLE_RATE = _RECORDER_TARGET_FREQUENCY_MAX * 2
+_RECORDER_SAMPLE_DURATION = 0.05
 _SYNTH_SAMPLE_RATE = 5000
 _SYNTH_SAMPLE_DURATION = 0.5
 
@@ -121,7 +124,7 @@ def _build_audio_source(args):
         min_duration = args.fft_size / _SYNTH_SAMPLE_RATE
         sample_duration = max(_SYNTH_SAMPLE_DURATION, min_duration)
         return Synthesizer(notes, _SYNTH_SAMPLE_RATE, sample_duration, snr=args.snr)
-    return Recorder(2500, 0.5)
+    return Recorder(_RECORDER_TARGET_FREQUENCY_MAX, _RECORDER_SAMPLE_DURATION, args.fft_size)
 
 
 def main(_stop_event=None):
@@ -133,7 +136,8 @@ def main(_stop_event=None):
 
     if args.gui:
         ResoundGUI, PeaksGUIProcess, NoteGUIProcess = _import_gui()
-        gui = ResoundGUI()
+        sample_rate = _SYNTH_SAMPLE_RATE if args.source == 'synth' else _RECORDER_SAMPLE_RATE
+        gui = ResoundGUI(fft_size=args.fft_size, sample_rate=sample_rate)
 
         # Fan note output to both ConsolePrinter and the GUI note display.
         note_gui       = ThreadedConsumer(2, NoteGUIProcess(gui))
@@ -167,6 +171,8 @@ def main(_stop_event=None):
             gui.run()           # blocks in the matplotlib event loop
         finally:
             record_producer.stop()
+            if isinstance(source, Recorder):
+                source.close()
     else:
         stop_event = _stop_event if _stop_event is not None else threading.Event()
         try:
@@ -175,6 +181,8 @@ def main(_stop_event=None):
             pass
         finally:
             record_producer.stop()
+            if isinstance(source, Recorder):
+                source.close()
 
 
 if __name__ == '__main__':
