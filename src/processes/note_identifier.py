@@ -2,7 +2,7 @@ import math
 import threading
 
 from interfaces.process import Process
-from musical_note import MusicalNote
+from data_models.musical_note import MusicalNote
 
 SEMITONE_FREQ_RATIO = math.pow(2, 1 / 12)
 SEMITONES_IN_SCALE = 12

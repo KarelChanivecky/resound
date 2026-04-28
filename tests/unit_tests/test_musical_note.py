@@ -1,6 +1,6 @@
 import unittest
 
-from musical_note import MusicalNote
+from data_models.musical_note import MusicalNote
 
 
 class TestMusicalNoteGetName(unittest.TestCase):

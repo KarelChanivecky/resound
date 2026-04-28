@@ -1,6 +1,6 @@
 import unittest
 
-from note_spec import NoteSpec, parse_note_specs, note_frequency
+from misc.note_spec import NoteSpec, parse_note_specs, note_frequency
 
 
 class TestParseNoteSpecs(unittest.TestCase):

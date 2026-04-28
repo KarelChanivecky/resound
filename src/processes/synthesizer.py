@@ -1,8 +1,8 @@
 import numpy as np
 
 from interfaces.process import Process
-from note_spec import NoteSpec, note_frequency
-from sound_sample import SoundSample
+from misc.note_spec import NoteSpec, note_frequency
+from data_models.sound_sample import SoundSample
 
 
 class Synthesizer(Process):

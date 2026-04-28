@@ -5,7 +5,7 @@ from unittest.mock import patch
 import numpy as np
 
 from processes.recorder import Recorder, _SOUNDDEVICE_AVAILABLE
-from sound_sample import SoundSample
+from data_models.sound_sample import SoundSample
 
 _HARDWARE_AVAILABLE = bool(os.environ.get('HARDWARE_TESTS'))
 

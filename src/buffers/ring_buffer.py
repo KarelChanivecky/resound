@@ -1,6 +1,6 @@
 import numpy as np
 
-from reusable_buffer import ReusableBuffer
+from buffers.reusable_buffer import ReusableBuffer
 
 
 class RingBuffer:

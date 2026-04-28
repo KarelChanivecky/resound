@@ -4,9 +4,9 @@ import numpy as np
 import scipy.signal.windows as scipy_win
 
 from interfaces.process import Process
-from reusable_buffer import ReusableBuffer
-from sound_sample import SoundSample
-from windowed_sample import WindowedSample
+from buffers.reusable_buffer import ReusableBuffer
+from data_models.sound_sample import SoundSample
+from data_models.windowed_sample import WindowedSample
 
 DEFAULT_FFT_SIZE = 2048
 

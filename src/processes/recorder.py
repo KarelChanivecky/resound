@@ -11,8 +11,8 @@ except OSError:
     _SOUNDDEVICE_AVAILABLE = False
 
 from interfaces.process import Process
-from ring_buffer import RingBuffer
-from sound_sample import SoundSample
+from buffers.ring_buffer import RingBuffer
+from data_models.sound_sample import SoundSample
 
 DEFAULT_SAMPLE_DURATION = 0.05
 DEFAULT_FFT_SIZE = 2048

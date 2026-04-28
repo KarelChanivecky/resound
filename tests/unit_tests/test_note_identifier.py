@@ -1,7 +1,7 @@
 import threading
 from unittest import TestCase
 
-from musical_note import MusicalNote
+from data_models.musical_note import MusicalNote
 from processes.note_identifier import identify_note, get_semitone_diff, NoteIdentifier
 
 

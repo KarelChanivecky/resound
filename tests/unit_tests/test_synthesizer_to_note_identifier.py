@@ -12,7 +12,7 @@ import unittest
 
 import numpy as np
 
-from note_spec import parse_note_specs
+from misc.note_spec import parse_note_specs
 from processes.frequency_extractor import FrequencyExtractor
 from processes.note_identifier import NoteIdentifier
 from processes.synthesizer import Synthesizer

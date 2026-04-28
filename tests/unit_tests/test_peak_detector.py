@@ -2,12 +2,12 @@ import unittest
 
 import numpy as np
 
-from detected_peaks import DetectedPeaks
+from data_models.detected_peaks import DetectedPeaks
 from processes.peak_detector import PeakDetector
 from processes.spectrum_analyzer import SpectrumAnalyzer
 from processes.windower import Windower
-from sound_sample import SoundSample
-from spectrum import Spectrum
+from data_models.sound_sample import SoundSample
+from data_models.spectrum import Spectrum
 
 _SAMPLE_RATE = 44100
 _N = 4096

@@ -6,7 +6,7 @@ import scipy.signal.windows as scipy_win
 
 from processes.frequency_extractor import FrequencyExtractor
 from processes.frequency_interpolator import _gaussian_interpolation
-from sound_sample import SoundSample
+from data_models.sound_sample import SoundSample
 
 _SAMPLE_RATE = 44100
 _N = 4096

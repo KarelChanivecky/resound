@@ -4,8 +4,8 @@ import numpy as np
 
 from processes.spectrum_analyzer import SpectrumAnalyzer
 from processes.windower import Windower
-from sound_sample import SoundSample
-from spectrum import Spectrum
+from data_models.sound_sample import SoundSample
+from data_models.spectrum import Spectrum
 
 _SAMPLE_RATE = 44100
 _N = 4096

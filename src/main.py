@@ -3,7 +3,7 @@ import threading
 
 import scipy.signal.windows as scipy_win
 
-from note_spec import parse_note_specs
+from misc.note_spec import parse_note_specs
 from pipeline.consumer_producer import ConsumerProducer
 from pipeline.threaded_consumer import ThreadedConsumer
 from pipeline.threaded_consumer_producer import ThreadedConsumerProducer

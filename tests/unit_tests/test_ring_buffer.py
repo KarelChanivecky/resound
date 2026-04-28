@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from ring_buffer import RingBuffer
+from buffers.ring_buffer import RingBuffer
 
 
 class TestRingBuffer(unittest.TestCase):

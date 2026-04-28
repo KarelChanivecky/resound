@@ -3,7 +3,7 @@ import threading
 import numpy as np
 
 from interfaces.process import Process
-from spectrum import Spectrum
+from data_models.spectrum import Spectrum
 
 DEFAULT_EXPONENT = 1.0
 

@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 
 from processes.amplitude_exponentiation import AmplitudeExponentiator
-from spectrum import Spectrum
+from data_models.spectrum import Spectrum
 
 
 class TestAmplitudeExponentiator(unittest.TestCase):

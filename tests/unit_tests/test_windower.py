@@ -4,8 +4,8 @@ import numpy as np
 import scipy.signal.windows as scipy_win
 
 from processes.windower import Windower
-from sound_sample import SoundSample
-from windowed_sample import WindowedSample
+from data_models.sound_sample import SoundSample
+from data_models.windowed_sample import WindowedSample
 
 _SAMPLE_RATE = 44100
 _N = 4096

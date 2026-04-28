@@ -9,7 +9,7 @@ except OSError:
     _SOUNDDEVICE_AVAILABLE = False
 
 from interfaces.process import Process
-from sound_sample import SoundSample
+from data_models.sound_sample import SoundSample
 
 
 class Playback(Process):

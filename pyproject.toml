@@ -25,5 +25,4 @@ resound = "main:main"
 where = ["src"]
 
 [tool.setuptools]
-py-modules = ["main", "musical_note", "note_spec", "reusable_buffer", "ring_buffer", "sound_sample",
-              "windowed_sample", "spectrum", "detected_peaks"]
+py-modules = ["main"]
