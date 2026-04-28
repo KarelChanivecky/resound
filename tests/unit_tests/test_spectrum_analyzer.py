@@ -1,7 +1,6 @@
 import unittest
 
 import numpy as np
-import scipy.signal.windows as scipy_win
 
 from processes.windower import Windower
 from processes.spectrum_analyzer import SpectrumAnalyzer

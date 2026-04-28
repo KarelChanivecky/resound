@@ -100,12 +100,12 @@ class ResoundGUI:
     def set_fft_size(self, fft_size: int) -> None:
         self._fft_size = fft_size
         self._ax_time.set_xlim(0, fft_size - 1)
-        self._fig.canvas.draw_idle()
+        self._redraw_signal_geometry()
 
     def set_sample_rate(self, sample_rate: int) -> None:
         self._nyquist = sample_rate / 2
         self._ax_freq.set_xlim(0, self._nyquist)
-        self._fig.canvas.draw_idle()
+        self._redraw_signal_geometry()
 
     def set_analysis_range(self, max_frequency: int, fft_size: int) -> None:
         self._nyquist = max_frequency
@@ -113,7 +113,7 @@ class ResoundGUI:
         self._ax_freq.set_xlim(0, self._nyquist)
         self._ax_time.set_xlim(0, fft_size - 1)
         self._set_value_label('fft_size', str(fft_size))
-        self._fig.canvas.draw_idle()
+        self._redraw_signal_geometry()
 
     def set_controls(self, controls) -> None:
         self._controls = controls
@@ -597,14 +597,23 @@ class ResoundGUI:
     # ------------------------------------------------------------------ #
 
     def _init_anim(self):
+        self._clear_signal_artists()
+        self._note_text.set_text('?')
+        return self._animated_artists
+
+    def _clear_signal_artists(self):
         self._line_raw.set_data([], [])
         self._line_windowed.set_data([], [])
         self._line_spectrum.set_data([], [])
         self._threshold_line.set_ydata([0, 0])
         self._scatter_peaks.set_offsets(np.empty((0, 2)))
         self._noise_fill.set_height(0)
-        self._note_text.set_text('—')
-        return self._animated_artists
+
+    def _redraw_signal_geometry(self):
+        with self._lock:
+            self._latest_peaks = None
+        self._clear_signal_artists()
+        self._fig.canvas.draw()
 
     def _update(self, _frame):
         try:
@@ -639,6 +648,8 @@ class ResoundGUI:
             raw_max = np.abs(ws.raw_samples).max()
             raw_norm = ws.raw_samples / raw_max if raw_max > 0 else ws.raw_samples
             self._line_raw.set_data(x, raw_norm)
+        else:
+            self._line_raw.set_data([], [])
 
         wind_max = np.abs(ws.samples).max()
         wind_norm = ws.samples / wind_max if wind_max > 0 else ws.samples

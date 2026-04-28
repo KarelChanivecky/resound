@@ -15,7 +15,6 @@ from main import (
     _build_audio_source,
     _build_gui_controls,
     _fft_size_for_max_analyzed_frequency,
-    main,
 )
 from processes.recorder import Recorder
 from processes.synthesizer import Synthesizer

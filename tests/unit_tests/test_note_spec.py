@@ -80,6 +80,5 @@ class TestNoteFrequency(unittest.TestCase):
     def test_detune_10_is_25_cents_sharp(self):
         base = self._freq('A41')
         detuned = note_frequency(parse_note_specs('A41:10')[0])
-        import math
         expected_ratio = 2 ** (25 / 1200)
         self.assertAlmostEqual(detuned / base, expected_ratio, places=5)
