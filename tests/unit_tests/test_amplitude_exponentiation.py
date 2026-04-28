@@ -61,6 +61,16 @@ class TestAmplitudeExponentiator(unittest.TestCase):
         result = exp.run(spectrum)
         self.assertIs(result.windowed_sample, sentinel)
 
+    def test_large_exponent_does_not_overflow(self):
+        # Values that would overflow float64 with a direct ** call must stay finite
+        # and preserve the peak via the iterative normalise-then-exponentiate approach.
+        exp = AmplitudeExponentiator(exponent=1000.0)
+        spectrum = self._make_spectrum([1e10, 2e10, 5e10])
+        result = exp.run(spectrum)
+        self.assertTrue(np.all(np.isfinite(result.amplitudes)))
+        self.assertAlmostEqual(result.amplitudes.max(),
+                               spectrum.amplitudes.max(), places=3)
+
 
 if __name__ == '__main__':
     unittest.main()
