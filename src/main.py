@@ -3,16 +3,20 @@ import threading
 
 import scipy.signal.windows as scipy_win
 
+from pipeline.consumer_producer import ConsumerProducer
 from pipeline.threaded_consumer import ThreadedConsumer
 from pipeline.threaded_consumer_producer import ThreadedConsumerProducer
 from pipeline.threaded_producer import ThreadedProducer
 from pipeline.threaded_t_producer_consumer import ThreadedTConsumerProducer
-from processes.frequency_extractor import FrequencyExtractor
 from processes.console_printer import ConsolePrinter
+from processes.frequency_interpolator import FrequencyInterpolator
 from processes.note_identifier import NoteIdentifier
+from processes.peak_detector import PeakDetector
 from processes.playback import Playback
 from processes.recorder import Recorder
+from processes.spectrum_analyzer import SpectrumAnalyzer
 from processes.synthesizer import Synthesizer
+from processes.windower import Windower
 from note_spec import parse_note_specs
 
 _WINDOWS_WITH_NO_PARAMS = {'hann', 'hamming', 'blackman', 'blackmanharris', 'boxcar', 'flattop'}
@@ -119,18 +123,17 @@ def main(_stop_event=None):
 
     console_printer = ThreadedConsumer(10, ConsolePrinter())
     note_identifier = ThreadedConsumerProducer(10, console_printer, NoteIdentifier())
-    freq_extractor = ThreadedConsumerProducer(
-        10, note_identifier,
-        FrequencyExtractor(fft_size=args.fft_size,
-                           target_z_score=args.zscore,
-                           norm=norm,
-                           window=window))
+    freq_interpolator = ConsumerProducer(note_identifier, FrequencyInterpolator())
+    peak_detector = ConsumerProducer(freq_interpolator, PeakDetector(target_z_score=args.zscore))
+    spectrum_analyzer = ConsumerProducer(peak_detector, SpectrumAnalyzer(norm=norm))
+    windower = ThreadedConsumerProducer(
+        10, spectrum_analyzer, Windower(fft_size=args.fft_size, window=window))
     source = _build_audio_source(args)
     if args.playback:
         playback_consumer = ThreadedConsumer(2, Playback())
-        upstream = ThreadedTConsumerProducer(10, freq_extractor, playback_consumer)
+        upstream = ThreadedTConsumerProducer(10, windower, playback_consumer)
     else:
-        upstream = freq_extractor
+        upstream = windower
     record_producer = ThreadedProducer(upstream, source)
     record_producer.start()
 
