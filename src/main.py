@@ -8,6 +8,7 @@ from pipeline.threaded_consumer import ThreadedConsumer
 from pipeline.threaded_consumer_producer import ThreadedConsumerProducer
 from pipeline.threaded_producer import ThreadedProducer
 from pipeline.threaded_t_producer_consumer import ThreadedTConsumerProducer
+from processes.amplitude_exponentiation import AmplitudeExponentiator
 from processes.console_printer import ConsolePrinter
 from processes.frequency_interpolator import FrequencyInterpolator
 from processes.note_identifier import NoteIdentifier
@@ -94,6 +95,8 @@ def _parse_args(args=None):
                    help='shape parameter for the kaiser window (default: 5.0)')
     p.add_argument('--alpha', type=float, default=0.5, metavar='ALPHA',
                    help='taper fraction for the tukey window, 0..1 (default: 0.5)')
+    p.add_argument('--amp-exp', type=_nonneg_float, default=1.0, metavar='E',
+                   help='amplitude exponent for dynamic-range shaping, must be >= 0 (default: 1.0)')
     p.add_argument('--gui', action='store_true',
                    help='show the real-time visualization window')
 
@@ -107,14 +110,18 @@ def _parse_args(args=None):
     return namespace
 
 
-def _build_window(args):
-    if args.window == 'kaiser':
-        window_spec = ('kaiser', args.beta)
-    elif args.window == 'tukey':
-        window_spec = ('tukey', args.alpha)
+def _make_window(window_name, fft_size, beta, alpha):
+    if window_name == 'kaiser':
+        window_spec = ('kaiser', beta)
+    elif window_name == 'tukey':
+        window_spec = ('tukey', alpha)
     else:
-        window_spec = args.window
-    return scipy_win.get_window(window_spec, args.fft_size, fftbins=True)
+        window_spec = window_name
+    return scipy_win.get_window(window_spec, fft_size, fftbins=True)
+
+
+def _build_window(args):
+    return _make_window(args.window, args.fft_size, args.beta, args.alpha)
 
 
 def _build_audio_source(args):
@@ -127,37 +134,154 @@ def _build_audio_source(args):
     return Recorder(_RECORDER_TARGET_FREQUENCY_MAX, _RECORDER_SAMPLE_DURATION, args.fft_size)
 
 
+def _build_gui_controls(args, source, gui, windower, peak_detector,
+                        spectrum_analyzer, note_identifier, amplitude_exp_process):
+    state = {
+        'fft_size': args.fft_size,
+        'window': args.window,
+        'beta': args.beta,
+        'alpha': args.alpha,
+    }
+
+    def _set_window():
+        window = _make_window(
+            state['window'],
+            state['fft_size'],
+            state['beta'],
+            state['alpha'],
+        )
+        windower.set_window(window)
+
+    def set_fft_size(value):
+        fft_size = int(value)
+        if fft_size <= 0:
+            return
+        state['fft_size'] = fft_size
+        _set_window()
+        if hasattr(source, 'set_fft_size'):
+            source.set_fft_size(fft_size)
+        gui.set_fft_size(fft_size)
+
+    def set_window(value):
+        state['window'] = value
+        _set_window()
+
+    def set_beta(value):
+        state['beta'] = float(value)
+        _set_window()
+
+    def set_alpha(value):
+        state['alpha'] = float(value)
+        _set_window()
+
+    def set_zscore(value):
+        zscore = float(value)
+        if zscore >= 0:
+            peak_detector.set_target_z_score(zscore)
+
+    def set_fft_norm(value):
+        spectrum_analyzer.set_norm(None if value == 'backward' else value)
+
+    def set_a4_frequency(value):
+        a4_frequency = float(value)
+        if a4_frequency > 0:
+            note_identifier.set_a4_frequency(a4_frequency)
+
+    def set_recorder_target_frequency_max(value):
+        target_frequency_max = int(value)
+        if target_frequency_max <= 0 or not hasattr(source, 'set_target_frequency_max'):
+            return
+        source.set_target_frequency_max(target_frequency_max)
+        gui.set_sample_rate(target_frequency_max * 2)
+
+    def set_recorder_sample_duration(value):
+        sample_duration = float(value)
+        if sample_duration > 0 and hasattr(source, 'set_sample_duration'):
+            source.set_sample_duration(sample_duration)
+
+    def set_amp_exp(value):
+        exp = float(value)
+        if exp >= 0:
+            amplitude_exp_process.set_exponent(exp)
+
+    return {
+        'fft_size': set_fft_size,
+        'window': set_window,
+        'beta': set_beta,
+        'alpha': set_alpha,
+        'zscore': set_zscore,
+        'fft_norm': set_fft_norm,
+        'a4_frequency': set_a4_frequency,
+        'recorder_target_frequency_max': set_recorder_target_frequency_max,
+        'recorder_sample_duration': set_recorder_sample_duration,
+        'amp_exp': set_amp_exp,
+    }
+
+
 def main(_stop_event=None):
     args = _parse_args()
     norm = None if args.fft_norm == 'backward' else args.fft_norm
     window = _build_window(args)
 
     console_printer = ThreadedConsumer(10, ConsolePrinter())
+    source = _build_audio_source(args)
+    windower_process = Windower(fft_size=args.fft_size, window=window)
+    spectrum_analyzer_process = SpectrumAnalyzer(norm=norm)
+    amplitude_exp_process = AmplitudeExponentiator(exponent=args.amp_exp)
+    peak_detector_process = PeakDetector(target_z_score=args.zscore)
+    note_identifier_process = NoteIdentifier()
 
     if args.gui:
         ResoundGUI, PeaksGUIProcess, NoteGUIProcess = _import_gui()
         sample_rate = _SYNTH_SAMPLE_RATE if args.source == 'synth' else _RECORDER_SAMPLE_RATE
-        gui = ResoundGUI(fft_size=args.fft_size, sample_rate=sample_rate)
+        gui = ResoundGUI(
+            fft_size=args.fft_size,
+            sample_rate=sample_rate,
+            control_values={
+                'fft_size': args.fft_size,
+                'window': args.window,
+                'beta': args.beta,
+                'alpha': args.alpha,
+                'zscore': args.zscore,
+                'fft_norm': args.fft_norm,
+                'a4_frequency': 440.0,
+                'recorder_target_frequency_max': _RECORDER_TARGET_FREQUENCY_MAX,
+                'recorder_sample_duration': _RECORDER_SAMPLE_DURATION,
+                'amp_exp': args.amp_exp,
+            },
+        )
+        gui.set_controls(
+            _build_gui_controls(
+                args,
+                source,
+                gui,
+                windower_process,
+                peak_detector_process,
+                spectrum_analyzer_process,
+                note_identifier_process,
+                amplitude_exp_process,
+            )
+        )
 
         # Fan note output to both ConsolePrinter and the GUI note display.
         note_gui       = ThreadedConsumer(2, NoteGUIProcess(gui))
         note_sink      = ThreadedTConsumerProducer(4, console_printer, note_gui)
-        note_identifier = ThreadedConsumerProducer(10, note_sink, NoteIdentifier())
+        note_identifier = ThreadedConsumerProducer(10, note_sink, note_identifier_process)
 
         # Fan peak output to FrequencyInterpolator chain and the GUI spectrum display.
         freq_interpolator = ConsumerProducer(note_identifier, FrequencyInterpolator())
         peaks_gui  = ThreadedConsumer(2, PeaksGUIProcess(gui))
         peaks_sink = ThreadedTConsumerProducer(4, freq_interpolator, peaks_gui)
-        peak_detector     = ConsumerProducer(peaks_sink, PeakDetector(target_z_score=args.zscore))
+        peak_detector     = ConsumerProducer(peaks_sink, peak_detector_process)
     else:
-        note_identifier   = ThreadedConsumerProducer(10, console_printer, NoteIdentifier())
+        note_identifier   = ThreadedConsumerProducer(10, console_printer, note_identifier_process)
         freq_interpolator = ConsumerProducer(note_identifier, FrequencyInterpolator())
-        peak_detector     = ConsumerProducer(freq_interpolator, PeakDetector(target_z_score=args.zscore))
+        peak_detector     = ConsumerProducer(freq_interpolator, peak_detector_process)
 
-    spectrum_analyzer = ConsumerProducer(peak_detector, SpectrumAnalyzer(norm=norm))
+    amplitude_exp     = ConsumerProducer(peak_detector, amplitude_exp_process)
+    spectrum_analyzer = ConsumerProducer(amplitude_exp, spectrum_analyzer_process)
     windower = ThreadedConsumerProducer(
-        10, spectrum_analyzer, Windower(fft_size=args.fft_size, window=window))
-    source = _build_audio_source(args)
+        10, spectrum_analyzer, windower_process)
     if args.playback:
         playback_consumer = ThreadedConsumer(2, Playback())
         upstream = ThreadedTConsumerProducer(10, windower, playback_consumer)

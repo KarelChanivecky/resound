@@ -10,7 +10,7 @@ import time
 import unittest
 from unittest.mock import patch
 
-from main import _parse_args, _build_audio_source, main
+from main import _parse_args, _build_audio_source, _build_gui_controls, main
 from processes.recorder import Recorder
 from processes.synthesizer import Synthesizer
 from processes.frequency_extractor import FrequencyExtractor
@@ -87,6 +87,140 @@ class TestBuildAudioSource(unittest.TestCase):
         args = _parse_args(['--source', 'synth', '--notes', 'A45'])
         source = _build_audio_source(args)
         self.assertIsInstance(source, Synthesizer)
+
+
+class TestBuildGUIControls(unittest.TestCase):
+
+    class _Gui:
+        def __init__(self):
+            self.fft_size = None
+            self.sample_rate = None
+
+        def set_fft_size(self, fft_size):
+            self.fft_size = fft_size
+
+        def set_sample_rate(self, sample_rate):
+            self.sample_rate = sample_rate
+
+    class _SetterRecorder:
+        def __init__(self):
+            self.fft_size = None
+            self.target_frequency_max = None
+            self.sample_duration = None
+
+        def set_fft_size(self, fft_size):
+            self.fft_size = fft_size
+
+        def set_target_frequency_max(self, target_frequency_max):
+            self.target_frequency_max = target_frequency_max
+
+        def set_sample_duration(self, sample_duration):
+            self.sample_duration = sample_duration
+
+    class _Windower:
+        def __init__(self):
+            self.window = None
+
+        def set_window(self, window):
+            self.window = window
+
+    class _PeakDetector:
+        def __init__(self):
+            self.target_z_score = None
+
+        def set_target_z_score(self, target_z_score):
+            self.target_z_score = target_z_score
+
+    class _SpectrumAnalyzer:
+        def __init__(self):
+            self.norm = 'unset'
+
+        def set_norm(self, norm):
+            self.norm = norm
+
+    class _NoteIdentifier:
+        def __init__(self):
+            self.a4_frequency = None
+
+        def set_a4_frequency(self, a4_frequency):
+            self.a4_frequency = a4_frequency
+
+    class _AmplitudeExponentiator:
+        def __init__(self):
+            self.exponent = None
+
+        def set_exponent(self, exponent):
+            self.exponent = exponent
+
+    def _controls(self):
+        args = _parse_args(['--gui'])
+        source = self._SetterRecorder()
+        gui = self._Gui()
+        windower = self._Windower()
+        peak_detector = self._PeakDetector()
+        spectrum_analyzer = self._SpectrumAnalyzer()
+        note_identifier = self._NoteIdentifier()
+        amplitude_exp = self._AmplitudeExponentiator()
+
+        controls = _build_gui_controls(
+            args,
+            source,
+            gui,
+            windower,
+            peak_detector,
+            spectrum_analyzer,
+            note_identifier,
+            amplitude_exp,
+        )
+        return controls, source, gui, windower, peak_detector, spectrum_analyzer, note_identifier, amplitude_exp
+
+    def test_fft_size_updates_recorder_windower_and_gui(self):
+        controls, source, gui, windower, *_ = self._controls()
+
+        controls['fft_size'](1024)
+
+        self.assertEqual(source.fft_size, 1024)
+        self.assertEqual(gui.fft_size, 1024)
+        self.assertEqual(len(windower.window), 1024)
+
+    def test_window_shape_controls_update_windower(self):
+        controls, _source, _gui, windower, *_ = self._controls()
+
+        controls['window']('kaiser')
+        controls['beta'](8.0)
+
+        self.assertEqual(len(windower.window), 2048)
+
+    def test_zscore_updates_peak_detector(self):
+        controls, _source, _gui, _windower, peak_detector, *_ = self._controls()
+
+        controls['zscore'](4.5)
+
+        self.assertEqual(peak_detector.target_z_score, 4.5)
+
+    def test_fft_norm_backward_maps_to_none(self):
+        controls, *_items, spectrum_analyzer, _note_identifier, _amp_exp = self._controls()
+
+        controls['fft_norm']('backward')
+
+        self.assertIsNone(spectrum_analyzer.norm)
+
+    def test_a4_frequency_updates_note_identifier(self):
+        controls, *_items, note_identifier, _amp_exp = self._controls()
+
+        controls['a4_frequency'](442.0)
+
+        self.assertEqual(note_identifier.a4_frequency, 442.0)
+
+    def test_recorder_controls_update_recorder_and_gui(self):
+        controls, source, gui, *_ = self._controls()
+
+        controls['recorder_target_frequency_max'](3000)
+        controls['recorder_sample_duration'](0.1)
+
+        self.assertEqual(source.target_frequency_max, 3000)
+        self.assertEqual(source.sample_duration, 0.1)
+        self.assertEqual(gui.sample_rate, 6000)
 
 
 class TestCLIPipeline(unittest.TestCase):
