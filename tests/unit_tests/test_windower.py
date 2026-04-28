@@ -59,3 +59,19 @@ class TestWindower(unittest.TestCase):
         result = w.run(_make_sample(n=_N))
         self.assertEqual(result.fft_size, 1024)
         self.assertEqual(len(result.samples), 1024)
+
+    def test_returned_raw_samples_are_not_mutated_by_next_run(self):
+        w = Windower(fft_size=512)
+        first = w.run(_make_sample(n=1024, freq=440.0))
+        first_raw = first.raw_samples
+        w.run(_make_sample(n=1024, freq=880.0))
+
+        np.testing.assert_array_equal(first_raw, _make_sample(n=1024, freq=440.0).get_samples()[:512])
+
+    def test_returned_windowed_samples_are_not_mutated_by_next_run(self):
+        w = Windower(fft_size=512)
+        first = w.run(_make_sample(n=1024, freq=440.0))
+        first_windowed = first.samples.copy()
+        w.run(_make_sample(n=1024, freq=880.0))
+
+        np.testing.assert_array_equal(first.samples, first_windowed)

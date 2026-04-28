@@ -4,6 +4,7 @@ import numpy as np
 import scipy.signal.windows as scipy_win
 
 from interfaces.process import Process
+from reusable_buffer import ReusableBuffer
 from sound_sample import SoundSample
 from windowed_sample import WindowedSample
 
@@ -29,6 +30,8 @@ class Windower(Process):
     def __init__(self, fft_size=DEFAULT_FFT_SIZE, window=None):
         self.__fft_size = fft_size
         self.__window = window if window is not None else scipy_win.hann(fft_size, sym=False)
+        self.__raw_samples = ReusableBuffer()
+        self.__windowed_samples = ReusableBuffer()
         self.__lock = threading.Lock()
 
     def set_fft_size(self, fft_size: int) -> None:
@@ -50,7 +53,13 @@ class Windower(Process):
 
         samples = sound_sample.get_samples()
         cropped = samples[:fft_size]
-        raw = cropped.astype(np.float64)
+        raw = self.__raw_samples.copy_from(cropped.astype(np.float64, copy=False))
         normalized = _normalize_32b(cropped)
-        windowed = normalized * window
-        return WindowedSample(windowed, fft_size, sound_sample.get_sample_rate(), raw)
+        windowed = self.__windowed_samples.ensure((fft_size,), np.float64)
+        np.multiply(normalized, window, out=windowed)
+        return WindowedSample(
+            self.__windowed_samples.snapshot(),
+            fft_size,
+            sound_sample.get_sample_rate(),
+            self.__raw_samples.snapshot(),
+        )
